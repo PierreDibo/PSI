@@ -56,7 +56,7 @@ public class Gestionnaire {
     	joinThread(new Thread(new ClientEcrivain(s, "L'annonce n'a pas pu être ajouté")));
     }
 
-    public static void checkAllAnnonces() {
+    public static String checkAllAnnonces() {
         String s = "Annonces";
         for (Entry<Utilisateur, ArrayList<Annonce>> entry : Gestionnaire.ANNONCES.entrySet()) {
             ArrayList<Annonce> values = entry.getValue();
@@ -68,6 +68,7 @@ public class Gestionnaire {
                 s += values.get(i) + "\n";
             }
         }
+        return s;
     }
 
     public static boolean existsUtilisateurs(Utilisateur o) {
@@ -138,8 +139,10 @@ public class Gestionnaire {
             case "UPDATE_ANNONCE":
                 break;
             case "CHECK_ALL_ANNONCES":
+            	joinThread(new Thread(new ClientEcrivain(client, checkAllAnnonces())));
                 break;
             case "CHECK_ANNONCES":
+            	
                 break;
             /*case "CHECK_ANNONCES_UTILISATEUR":
                 break;
@@ -170,6 +173,24 @@ public class Gestionnaire {
                 + "CONTACT ***" + "\n"
                 + "QUIT ***" + "\n"
                 + "HELP ";
+    }
+    
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) {
+        try (final ServerSocket server = new ServerSocket(1027)) {
+            while (true) {
+                Socket clientSocket = server.accept();
+
+                new Thread(new ClientEcouteur(clientSocket)).start();
+                new Thread(new ClientEcrivain(clientSocket, "WELCOME")).start();
+            }
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     static class ClientEcouteur implements Runnable {
