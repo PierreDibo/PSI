@@ -21,7 +21,8 @@ import java.util.logging.Logger;
  * @author Aillerie Anthony
  */
 public class Gestionnaire {
-	public static final int ATTENTE = 100;
+
+    public static final int ATTENTE = 100;
     private static final HashMap<Utilisateur, ArrayList<Annonce>> ANNONCES = new HashMap<>();
 
     public static boolean addAnnonce(Utilisateur u, Annonce e) {
@@ -36,28 +37,38 @@ public class Gestionnaire {
                 return annonces.remove(id) != null;
             }
         }
-
         return false;
     }
 
+    public static Annonce getAnnonce(int id) {
+        for (ArrayList<Annonce> annonces : Gestionnaire.ANNONCES.values()) {
+            for (int i = 0; i < annonces.size(); i++) {
+                if (annonces.get(id).getIdentifiant() == id) {
+                    return annonces.get(i);
+                }
+            }
+        }
+        return null;
+    }
+
     private static void deleteSuccess(Socket s) throws InterruptedException {
-    	joinThread(new Thread(new ClientEcrivain(s, "L'annonce a pu être supprimé")));
+        joinThread(new Thread(new ClientEcrivain(s, "L'annonce a pu être supprimé")));
     }
 
-    private static void deleteError(Socket s) throws InterruptedException  {
-    	joinThread(new Thread(new ClientEcrivain(s, "L'annonce n'a pas pu être supprimé")));
+    private static void deleteError(Socket s) throws InterruptedException {
+        joinThread(new Thread(new ClientEcrivain(s, "L'annonce n'a pas pu être supprimé")));
     }
 
-    private static void addSuccess(Socket s) throws InterruptedException  {
-    	joinThread(new Thread(new ClientEcrivain(s, "L'annonce a pu être ajouté")));
+    private static void addSuccess(Socket s) throws InterruptedException {
+        joinThread(new Thread(new ClientEcrivain(s, "L'annonce a pu être ajouté")));
     }
 
-    private static void addError(Socket s) throws InterruptedException  {
-    	joinThread(new Thread(new ClientEcrivain(s, "L'annonce n'a pas pu être ajouté")));
+    private static void addError(Socket s) throws InterruptedException {
+        joinThread(new Thread(new ClientEcrivain(s, "L'annonce n'a pas pu être ajouté")));
     }
 
     public static String checkAllAnnonces() {
-        String s = "Annonces";
+        String s = "";
         for (Entry<Utilisateur, ArrayList<Annonce>> entry : Gestionnaire.ANNONCES.entrySet()) {
             ArrayList<Annonce> values = entry.getValue();
             if (values.isEmpty()) {
@@ -81,11 +92,20 @@ public class Gestionnaire {
 
     public static Utilisateur getUtilisateur(String pseudo, String mdp) {
         for (Utilisateur u : Gestionnaire.ANNONCES.keySet()) {
-            if (u.getPseudo().equals(pseudo) && u.getMotDePasse().toString().equals(mdp)) {
+            if (u.getPseudo().equals(pseudo) && u.getMotDePasse().equals(mdp)) {
                 return u;
             }
         }
         return null;
+    }
+
+    private static String getDescription(String[] msg, int index) {
+        String s = "";
+
+        for (; index < msg.length; index++) {
+            s += msg[index] + " ";
+        }
+        return s;
     }
 
     public static void parse(String[] msg, Socket client) throws IOException, InterruptedException {
@@ -98,22 +118,16 @@ public class Gestionnaire {
                     addUtilisateurs(u);
                     u.toString();
                 } else {
-                	joinThread(new Thread(new ClientEcrivain(client, "L'utilisateur " + u.getPseudo() + " existe déjà.")));
+                    joinThread(new Thread(new ClientEcrivain(client, "L'utilisateur " + u.getPseudo() + " existe déjà.")));
                 }
                 break;
-            case "CONNECT":
-                break;
             case "QUIT":
-            	joinThread(new Thread(new ClientEcrivain(client, "AUREVOIR")));
+                joinThread(new Thread(new ClientEcrivain(client, "AUREVOIR")));
                 break;
             case "ADD_ANNONCE":
-                if (msg.length == 8) {
-                    if ((u = getUtilisateur(msg[i++], msg[i++])) != null) {
-                        if (addAnnonce(u, new Annonce(msg[i++], Annonce.getDomaine(msg[i++]), Long.parseLong(msg[i++]), msg[i++]))) {
-                            addSuccess(client);
-                        } else {
-                            addError(client);
-                        }
+                if ((u = getUtilisateur(msg[i++], msg[i++])) != null) {
+                    if (addAnnonce(u, new Annonce(msg[i++], Annonce.getDomaine(msg[i++]), Long.parseLong(msg[i++]), getDescription(msg, i)))) {
+                        addSuccess(client);
                     } else {
                         addError(client);
                     }
@@ -122,59 +136,53 @@ public class Gestionnaire {
                 }
                 break;
             case "DELETE_ANNONCE":
-                if (msg.length == 8) {
-                    if ((u = getUtilisateur(msg[i++], msg[i++])) != null) {
-                        if (addAnnonce(u, new Annonce(msg[i++], Annonce.getDomaine(msg[i++]), Long.parseLong(msg[i++]), msg[i++]))) {
-                            addSuccess(client);
-                        } else {
-                            addError(client);
-                        }
+                if ((u = getUtilisateur(msg[i++], msg[i++])) != null) {
+                    if (deleteAnnonce(u, Integer.parseInt(msg[i++]))) {
+                        deleteSuccess(client);
                     } else {
-                        addError(client);
+                        deleteError(client);
                     }
                 } else {
-                    addError(client);
+                    deleteError(client);
                 }
                 break;
             case "UPDATE_ANNONCE":
                 break;
             case "CHECK_ALL_ANNONCES":
-            	joinThread(new Thread(new ClientEcrivain(client, checkAllAnnonces())));
+                joinThread(new Thread(new ClientEcrivain(client, checkAllAnnonces())));
                 break;
             case "CHECK_ANNONCES":
-            	
+
                 break;
             /*case "CHECK_ANNONCES_UTILISATEUR":
                 break;
             case "CHECK_ANNONCES_DOMAINE":
                 break;*/
             case "HELP":
-            	joinThread(new Thread(new ClientEcrivain(client, help())));
+                joinThread(new Thread(new ClientEcrivain(client, help())));
                 break;
         }
     }
-    
+
     public static void joinThread(Thread t) throws InterruptedException {
-    	t.start();
-    	t.join();
+        t.start();
+        t.join();
     }
 
     public static String help() {
         return "ADD_ANNONCE pseudo mdp nomAnnonce domaine prix description ***" + "\n"
-                + "DELETE_ANNONCE id ***" + "\n"
-                + "UPDATE_ANNONCE id [domaine | prix | description]+ ***" + "\n"
+                + "DELETE_ANNONCE pseudo mdp id ***" + "\n"
+                + "UPDATE_ANNONCE pseudo mdp id [domaine | prix | description]+ ***" + "\n"
                 + "CHECK_ALL_ANNONCES ***" + "\n"
+                + "CHECK_ANNONCE id ***" + "\n"
                 + "CHECK_ANNONCES_CLIENT id ***" + "\n"
                 + "CHECK_ANNONCES_DOMAINE domaine ***" + "\n"
-                + "ANNONCES ***" + "\n"
-                + "ANNONCE ***" + "\n"
                 + "NEW pseudo mdp ***" + "\n"
-                + "CONNECT ***" + "\n"
                 + "CONTACT ***" + "\n"
                 + "QUIT ***" + "\n"
-                + "HELP ";
+                + "HELP ***";
     }
-    
+
     /**
      * @param args the command line arguments
      */
@@ -209,19 +217,14 @@ public class Gestionnaire {
                 String[] msg;
                 while ((str = input.readLine()) != null) {
                     System.out.println(str);
-                
-	                msg = str.split("\\s+");
-	                if(msg[msg.length - 1].equals("***")) {
-	                	parse(msg, client);
-	                }
-                    //System.out.println(Arrays.toString(str.split("\\s+")));
+                    msg = str.split("\\s+");
+                    if (msg[msg.length - 1].equals("***")) {
+                        parse(msg, client);
+                    }
                 }
-                
-            } catch (IOException ex) {
+            } catch (IOException | InterruptedException ex) {
                 Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (InterruptedException ex) {
-            	Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
-			}
+            }
         }
 
     }
@@ -240,7 +243,7 @@ public class Gestionnaire {
         public void run() {
             try {
                 BufferedWriter output = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
-                output.write(this.message + Message.FIN_MESSAGE);
+                output.write(this.message + "\n");
                 output.flush();
             } catch (IOException ex) {
                 Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);

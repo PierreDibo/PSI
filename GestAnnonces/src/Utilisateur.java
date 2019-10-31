@@ -1,21 +1,22 @@
+
 import java.net.Socket;
 import java.util.Objects;
 
 /**
  *
-<<<<<<< HEAD
- * @author dibop
-=======
+ * <<<<<<< HEAD
+ * @a
+ *
+ * uthor dibop =======
  * @author Pierre Dibo
- * @author Aillerie Anthony
->>>>>>> 3193ea92ca6bf9d787b84d025c52ca3449c0469c
+ * @author Aillerie Anthony >>>>>>> 3193ea92ca6bf9d787b84d025c52ca3449c0469c
  */
 public class Utilisateur {
 
     private String pseudo;
     private String motDePasse;
     private final Socket socket;
-    
+
     public Utilisateur(String pseudo, String motDePasse, Socket socket) {
         this.pseudo = pseudo;
         this.motDePasse = motDePasse;
@@ -70,6 +71,6 @@ public class Utilisateur {
 
     @Override
     public String toString() {
-        return "Utilisateur{" + "pseudo=" + pseudo + '}';
+        return "Pseudo : " + pseudo;
     }
 }

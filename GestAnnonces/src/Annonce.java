@@ -40,7 +40,6 @@ public class Annonce {
     public void setPrix(long prix) {
         this.prix = prix;
     }
-    
 
     public static Domaine getDomaine(String s) {
         switch (s) {
@@ -75,7 +74,7 @@ public class Annonce {
 
     @Override
     public String toString() {
-        return "Annonce\n"
+        return "Annonce " + nom + "\n"
                 + "Domaine : " + domaine + "\n"
                 + "Identifiant : " + identifiant + "\n"
                 + "Prix : " + prix + "€\n"
