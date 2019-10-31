@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -16,6 +17,7 @@ import java.util.logging.Logger;
 /**
  *
  * @author Pierre Dibo
+ * @author Aillerie Anthony
  */
 public class Client {
 
@@ -123,16 +125,16 @@ public class Client {
         @Override
         public void run() {
             try {
-                BufferedWriter output = new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream()));
-                String str;
-                /*while ((str = input.readLine()) != null) {
-                    System.out.println(str);
-                }*/
+            	Scanner in = new Scanner(System.in);
+                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+
+                while (in.hasNextLine())
+                    out.println(in.next());
+                
             } catch (IOException ex) {
                 Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-
     }
 
     static class Ecouteur implements Runnable {
@@ -146,15 +148,15 @@ public class Client {
         @Override
         public void run() {
             try {
-                BufferedReader input = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
-                String str;
-                while ((str = input.readLine()) != null) {
-                    System.out.println(str);
-                }
+                BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                String line;
+
+                while ((line = br.readLine()) != null)
+                    System.out.println("Message received -> " + line);
+                
             } catch (IOException ex) {
                 Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-
     }
 }
