@@ -21,8 +21,8 @@ import java.util.logging.Logger;
  * @author Aillerie Anthony
  */
 public class Gestionnaire {
-
-    public static final int ATTENTE = 100;
+	private static volatile boolean runningEcouteur = true;
+	public static final int ATTENTE = 100;
     private static final HashMap<Utilisateur, ArrayList<Annonce>> ANNONCES = new HashMap<>();
 
     public static boolean addAnnonce(Utilisateur u, Annonce e) {
@@ -122,7 +122,8 @@ public class Gestionnaire {
                 }
                 break;
             case "QUIT":
-                joinThread(new Thread(new ClientEcrivain(client, "AUREVOIR")));
+            	joinThread(new Thread(new ClientEcrivain(client, "AUREVOIR")));
+            	runningEcouteur = false;
                 break;
             case "ADD_ANNONCE":
                 if ((u = getUtilisateur(msg[i++], msg[i++])) != null) {
@@ -190,7 +191,6 @@ public class Gestionnaire {
         try (final ServerSocket server = new ServerSocket(1027)) {
             while (true) {
                 Socket clientSocket = server.accept();
-
                 new Thread(new ClientEcouteur(clientSocket)).start();
                 new Thread(new ClientEcrivain(clientSocket, "WELCOME")).start();
             }
@@ -202,7 +202,6 @@ public class Gestionnaire {
     }
 
     static class ClientEcouteur implements Runnable {
-
         private final Socket client;
 
         public ClientEcouteur(Socket s) {
@@ -249,7 +248,5 @@ public class Gestionnaire {
                 Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-
     }
-
 }
