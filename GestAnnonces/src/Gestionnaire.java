@@ -7,6 +7,9 @@ import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -16,6 +19,13 @@ import java.util.logging.Logger;
  * @author Pierre Dibo
  */
 public class Gestionnaire {
+
+    public static final int ATTENTE = 100;
+    private static final HashMap<Utilisateur, ArrayList<Annonce>> ANNONCES = new HashMap<>();
+
+    public static void parse(String[] msg, Socket client) throws IOException {
+
+    }
 
     /**
      * @param args the command line arguments
@@ -49,7 +59,7 @@ public class Gestionnaire {
                 BufferedReader input = new BufferedReader(new InputStreamReader(this.client.getInputStream()));
                 String str;
                 while ((str = input.readLine()) != null) {
-                    System.out.println(str);
+                    System.out.println(Arrays.toString(str.split("\\s+")));
                 }
             } catch (IOException ex) {
                 Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
@@ -72,7 +82,7 @@ public class Gestionnaire {
         public void run() {
             try {
                 BufferedWriter output = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
-                output.write(this.message + " ***\n");
+                output.write(this.message + Message.FIN_MESSAGE);
                 output.flush();
             } catch (IOException ex) {
                 Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);

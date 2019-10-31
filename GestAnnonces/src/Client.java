@@ -7,8 +7,6 @@ import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Locale;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,78 +19,10 @@ public class Client {
 
     public final int identifiant;
     private static int compteur = 0;
-    private final ArrayList<Annonce> annonces;
+    private static final Scanner SC = new Scanner(System.in);
 
     public Client() {
         this.identifiant = compteur++;
-        this.annonces = new ArrayList<>();
-    }
-
-    public ArrayList<Annonce> getAnnonces() {
-        return annonces;
-    }
-
-    private String choisirNom() {
-        String str;
-        do {
-            System.out.println("Donnez un nom à votre annonce");
-            try ( Scanner sc = new Scanner(System.in)) {
-                str = sc.nextLine();
-            }
-        } while (str == null);
-
-        return str;
-    }
-
-    private Domaine choisirDomaine() {
-        Domaine d = null;
-        do {
-            System.out.println("Donnez un domaine d'annonce parmis les domaines suivant :");
-            System.out.println(Domaine.descripteur());
-            try ( Scanner sc = new Scanner(System.in)) {
-                d = Annonce.getDomaine(sc.next().toLowerCase(Locale.ROOT));
-            }
-        } while (d == null);
-
-        return d;
-    }
-
-    private long donnerPrix() {
-        long p;
-        do {
-            System.out.println("Donnez un prix à votre annonce");
-            try ( Scanner sc = new Scanner(System.in)) {
-                p = sc.nextLong();
-            }
-        } while (p <= 0);
-
-        return p;
-    }
-
-    private String donnerDesciption() {
-        String desc = null;
-        do {
-            System.out.println("Donnez une desciption de votre annonce");
-            try ( Scanner sc = new Scanner(System.in)) {
-                desc = sc.nextLine();
-            }
-        } while (desc == null);
-
-        return desc;
-    }
-
-    public boolean ajouterAnnonce() {
-        String str;
-        Domaine d;
-        long prix;
-        String desc;
-
-        str = choisirNom();
-        d = choisirDomaine();
-        prix = donnerPrix();
-        desc = donnerDesciption();
-
-        return this.annonces.add(new Annonce(str, d, prix, desc));
     }
 
     /**
@@ -122,14 +52,14 @@ public class Client {
 
         @Override
         public void run() {
-            try {
-                BufferedWriter output = new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream()));
-                String str;
-                /*while ((str = input.readLine()) != null) {
-                    System.out.println(str);
-                }*/
-            } catch (IOException ex) {
-                Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
+            while (this.socket.isConnected()) {
+                try {
+                    BufferedWriter output = new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream()));
+                    output.write(SC.nextLine() + Message.FIN_MESSAGE);
+                    output.flush();
+                } catch (IOException ex) {
+                    Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         }
 
