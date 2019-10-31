@@ -6,6 +6,7 @@ import java.util.Objects;
 /**
  *
  * @author Pierre Dibo
+ * @author Aillerie Anthony
  */
 public class Utilisateur {
 
