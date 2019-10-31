@@ -10,8 +10,6 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,7 +19,7 @@ import java.util.logging.Logger;
  * @author Aillerie Anthony
  */
 public class Gestionnaire {
-	private static volatile boolean runningEcouteur = true;
+	public static volatile boolean runningEcouteur = true;
 	public static final int ATTENTE = 100;
     private static final HashMap<Utilisateur, ArrayList<Annonce>> ANNONCES = new HashMap<>();
 
@@ -40,14 +38,9 @@ public class Gestionnaire {
         return false;
     }
 
-    public static Annonce getAnnonce(int id) {
-        for (ArrayList<Annonce> annonces : Gestionnaire.ANNONCES.values()) {
-            for (int i = 0; i < annonces.size(); i++) {
-                if (annonces.get(id).getIdentifiant() == id) {
-                    return annonces.get(i);
-                }
-            }
-        }
+    public static String getAnnonce(int id) {
+        for (ArrayList<Annonce> annonces : Gestionnaire.ANNONCES.values())
+                    return annonces.get(id).toString();
         return null;
     }
 
@@ -152,8 +145,8 @@ public class Gestionnaire {
             case "CHECK_ALL_ANNONCES":
                 joinThread(new Thread(new ClientEcrivain(client, checkAllAnnonces())));
                 break;
-            case "CHECK_ANNONCES":
-
+            case "CHECK_ANNONCE":
+            	joinThread(new Thread(new ClientEcrivain(client, getAnnonce(Integer.parseInt(msg[i++])))));
                 break;
             /*case "CHECK_ANNONCES_UTILISATEUR":
                 break;

@@ -74,7 +74,7 @@ public class Annonce {
 
     @Override
     public String toString() {
-        return "Annonce: " + nom + "\n"
+        return "Annonce : " + nom + "\n"
                 + "Domaine : " + domaine + "\n"
                 + "Identifiant : " + identifiant + "\n"
                 + "Prix : " + prix + "€\n"
