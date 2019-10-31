@@ -3,7 +3,12 @@ import java.util.Objects;
 
 /**
  *
+<<<<<<< HEAD
  * @author dibop
+=======
+ * @author Pierre Dibo
+ * @author Aillerie Anthony
+>>>>>>> 3193ea92ca6bf9d787b84d025c52ca3449c0469c
  */
 public class Utilisateur {
 

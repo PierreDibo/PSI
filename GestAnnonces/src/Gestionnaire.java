@@ -10,6 +10,8 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -170,24 +172,6 @@ public class Gestionnaire {
                 + "HELP ";
     }
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) {
-        try (final ServerSocket server = new ServerSocket(1027)) {
-            while (true) {
-                Socket clientSocket = server.accept();
-
-                new Thread(new ClientEcouteur(clientSocket)).start();
-                new Thread(new ClientEcrivain(clientSocket, "WELCOME")).start();
-            }
-        } catch (UnknownHostException ex) {
-            Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
     static class ClientEcouteur implements Runnable {
 
         private final Socket client;
@@ -209,6 +193,7 @@ public class Gestionnaire {
 	                if(msg[msg.length - 1].equals("***")) {
 	                	parse(msg, client);
 	                }
+                    //System.out.println(Arrays.toString(str.split("\\s+")));
                 }
                 
             } catch (IOException ex) {
@@ -234,7 +219,7 @@ public class Gestionnaire {
         public void run() {
             try {
                 BufferedWriter output = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
-                output.write(this.message + " ***\n");
+                output.write(this.message + Message.FIN_MESSAGE);
                 output.flush();
             } catch (IOException ex) {
                 Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
