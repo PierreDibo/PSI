@@ -15,8 +15,8 @@ import java.util.logging.Logger;
 
 /**
  *
- *
  * @author Pierre Dibo
+ * @author Aillerie Anthony
  */
 public class Gestionnaire {
 

@@ -1,7 +1,7 @@
 
 /**
- *
  * @author Pierre Dibo
+ * @author Aillerie Anthony
  */
 public enum Domaine {
     voiture, moto, musique, electromenager, telephone, autres;
