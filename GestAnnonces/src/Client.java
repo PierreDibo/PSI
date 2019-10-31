@@ -1,16 +1,17 @@
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -20,21 +21,27 @@ public class Client {
 
     public final int identifiant;
     private static int compteur = 0;
-    private final String nom;
     private final ArrayList<Annonce> annonces;
 
-    public Client(String n) {
+    public Client() {
         this.identifiant = compteur++;
-        this.nom = n;
         this.annonces = new ArrayList<>();
-    }
-
-    public String getNom() {
-        return nom;
     }
 
     public ArrayList<Annonce> getAnnonces() {
         return annonces;
+    }
+
+    private String choisirNom() {
+        String str;
+        do {
+            System.out.println("Donnez un nom à votre annonce");
+            try ( Scanner sc = new Scanner(System.in)) {
+                str = sc.nextLine();
+            }
+        } while (str == null);
+
+        return str;
     }
 
     private Domaine choisirDomaine() {
@@ -75,42 +82,79 @@ public class Client {
     }
 
     public boolean ajouterAnnonce() {
+        String str;
         Domaine d;
         long prix;
         String desc;
 
+        str = choisirNom();
         d = choisirDomaine();
         prix = donnerPrix();
         desc = donnerDesciption();
 
-        return this.annonces.add(new Annonce(d, prix, desc));
+        return this.annonces.add(new Annonce(str, d, prix, desc));
     }
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        if (args.length != 1) {
-            System.err.println("Usage: java Client nomClient");
-            return;
-        }
-        try (final Socket socket = new Socket(InetAddress.getLocalHost(), 0)) {
-            Client client = new Client(args[0]);
+        try {
+            Socket socket = new Socket(InetAddress.getLocalHost(), 1027);
 
-            Thread ecrivain = new Thread(() -> {
+            new Thread(new Ecrivain(socket)).start();
+            new Thread(new Ecouteur(socket)).start();
 
-            });
-
-            Thread ecouteur = new Thread(() -> {
-
-            });
-
-            ecrivain.start();
-            ecouteur.start();
-
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
-            java.util.logging.Logger.getLogger(Client.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
+    static class Ecrivain implements Runnable {
+
+        private final Socket socket;
+
+        public Ecrivain(Socket socket) {
+            this.socket = socket;
+        }
+
+        @Override
+        public void run() {
+            try {
+                BufferedWriter output = new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream()));
+                String str;
+                /*while ((str = input.readLine()) != null) {
+                    System.out.println(str);
+                }*/
+            } catch (IOException ex) {
+                Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
+    }
+
+    static class Ecouteur implements Runnable {
+
+        private final Socket socket;
+
+        public Ecouteur(Socket socket) {
+            this.socket = socket;
+        }
+
+        @Override
+        public void run() {
+            try {
+                BufferedReader input = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
+                String str;
+                while ((str = input.readLine()) != null) {
+                    System.out.println(str);
+                }
+            } catch (IOException ex) {
+                Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
+    }
 }

@@ -5,14 +5,16 @@
  */
 public class Annonce {
 
-    public final int identifiant;
+    private final int identifiant;
     private static int compteur = 0;
+    private String nom;
     private final Domaine domaine;
     private long prix;
     private String description;
 
-    public Annonce(Domaine d, long p, String desc) {
+    public Annonce(String nom, Domaine d, long p, String desc) {
         this.identifiant = compteur++;
+        this.nom = nom;
         this.domaine = d;
         this.prix = p;
         this.description = desc;
@@ -25,6 +27,19 @@ public class Annonce {
     public Domaine getDomaine() {
         return domaine;
     }
+
+    public String getNom() {
+        return nom;
+    }
+
+    public void setNom(String nom) {
+        this.nom = nom;
+    }
+
+    public void setPrix(long prix) {
+        this.prix = prix;
+    }
+    
 
     public static Domaine getDomaine(String s) {
         switch (s) {
@@ -53,12 +68,17 @@ public class Annonce {
         return description;
     }
 
-    public void setPrix(int prix) {
-        this.prix = prix;
-    }
-
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    @Override
+    public String toString() {
+        return "Annonce\n"
+                + "Domaine : " + domaine + "\n"
+                + "Identifiant : " + identifiant + "\n"
+                + "Prix : " + prix + "€\n"
+                + "Description :\n" + description;
     }
 
 }
