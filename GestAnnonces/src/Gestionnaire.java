@@ -21,6 +21,7 @@ import java.util.logging.Logger;
  * @author Aillerie Anthony
  */
 public class Gestionnaire {
+	private static volatile boolean runningEcouteur = true;
 	public static final int ATTENTE = 100;
     private static final HashMap<Utilisateur, ArrayList<Annonce>> ANNONCES = new HashMap<>();
 
@@ -57,7 +58,7 @@ public class Gestionnaire {
     }
 
     public static String checkAllAnnonces() {
-        String s = "Annonces";
+        String s = "Annonces :\n";
         for (Entry<Utilisateur, ArrayList<Annonce>> entry : Gestionnaire.ANNONCES.entrySet()) {
             ArrayList<Annonce> values = entry.getValue();
             if (values.isEmpty()) {
@@ -105,6 +106,7 @@ public class Gestionnaire {
                 break;
             case "QUIT":
             	joinThread(new Thread(new ClientEcrivain(client, "AUREVOIR")));
+            	runningEcouteur = false;
                 break;
             case "ADD_ANNONCE":
                 if (msg.length == 8) {
@@ -182,7 +184,6 @@ public class Gestionnaire {
         try (final ServerSocket server = new ServerSocket(1027)) {
             while (true) {
                 Socket clientSocket = server.accept();
-
                 new Thread(new ClientEcouteur(clientSocket)).start();
                 new Thread(new ClientEcrivain(clientSocket, "WELCOME")).start();
             }
@@ -194,7 +195,6 @@ public class Gestionnaire {
     }
 
     static class ClientEcouteur implements Runnable {
-
         private final Socket client;
 
         public ClientEcouteur(Socket s) {
@@ -203,25 +203,26 @@ public class Gestionnaire {
 
         @Override
         public void run() {
-            try {
-                BufferedReader input = new BufferedReader(new InputStreamReader(this.client.getInputStream()));
-                String str;
-                String[] msg;
-                while ((str = input.readLine()) != null) {
-                    System.out.println(str);
-                
-	                msg = str.split("\\s+");
-	                if(msg[msg.length - 1].equals("***")) {
-	                	parse(msg, client);
-	                }
-                    //System.out.println(Arrays.toString(str.split("\\s+")));
-                }
-                
-            } catch (IOException ex) {
-                Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (InterruptedException ex) {
-            	Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
-			}
+        	try {
+        		BufferedReader input = new BufferedReader(new InputStreamReader(this.client.getInputStream()));
+        		String str;
+        		String[] msg;
+        		while ((str = input.readLine()) != null && runningEcouteur) {
+        			System.out.println(str);
+
+        			msg = str.split("\\s+");
+        			if(msg[msg.length - 1].equals("***")) {
+        				parse(msg, client);
+        			}
+
+        			//System.out.println(Arrays.toString(str.split("\\s+")));
+        		}
+
+        	} catch (IOException ex) {
+        		Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
+        	} catch (InterruptedException ex) {
+        		Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
+        	}
         }
 
     }
@@ -238,15 +239,13 @@ public class Gestionnaire {
 
         @Override
         public void run() {
-            try {
-                BufferedWriter output = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
-                output.write(this.message + Message.FIN_MESSAGE);
-                output.flush();
-            } catch (IOException ex) {
-                Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
-            }
+        	try {
+        		BufferedWriter output = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
+        		output.write(this.message + Message.FIN_MESSAGE);
+        		output.flush();
+        	} catch (IOException ex) {
+        		Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
+        	}
         }
-
     }
-
 }

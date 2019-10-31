@@ -75,11 +75,11 @@ public class Annonce {
 
     @Override
     public String toString() {
-        return "Annonce\n"
+        return "Annonce: " + nom + "\n"
                 + "Domaine : " + domaine + "\n"
                 + "Identifiant : " + identifiant + "\n"
                 + "Prix : " + prix + "€\n"
-                + "Description :\n" + description;
+                + "Description :\n" + description + "\n";
     }
 
 }
