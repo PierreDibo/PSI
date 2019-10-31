@@ -129,7 +129,7 @@ public class Client {
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
                 while (in.hasNextLine())
-                    out.println(in.next());
+                    out.println(in.nextLine());
                 
             } catch (IOException ex) {
                 Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
@@ -152,7 +152,7 @@ public class Client {
                 String line;
 
                 while ((line = br.readLine()) != null)
-                    System.out.println("Message received -> " + line);
+                    System.out.println(line);
                 
             } catch (IOException ex) {
                 Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
