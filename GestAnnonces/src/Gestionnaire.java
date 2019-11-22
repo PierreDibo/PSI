@@ -26,6 +26,9 @@ public class Gestionnaire {
     private static final HashMap<Utilisateur, ArrayList<Annonce>> ANNONCES = new HashMap<>();
 
     public static boolean addAnnonce(Utilisateur u, Annonce e) {
+    	if (e.getDomaine() == null) {
+    		return false;
+    	}
         return Gestionnaire.ANNONCES.get(u).add(e);
     }
 
@@ -123,6 +126,7 @@ public class Gestionnaire {
                     addUtilisateurSuccess(client);
                 } else {
                     joinThread(new Thread(new ClientEcrivain(client, "L'utilisateur " + u.getPseudo() + " existe déjà.")));
+                    addUtilisateurError(client);
                 }
                 break;
             case "QUIT":
@@ -132,7 +136,7 @@ public class Gestionnaire {
                 break;
             case "ADD_ANNONCE":
                 if ((u = getUtilisateur(msg[i++], msg[i++])) != null) {
-                    if (addAnnonce(u, new Annonce(msg[i++], Annonce.getDomaine(msg[i++]), Long.parseLong(msg[i++]), getDescription(msg, i)))) {
+                    if (addAnnonce(u, new Annonce(msg[i++], Annonce.getDomaine(msg[i++].toLowerCase()), Long.parseLong(msg[i++]), getDescription(msg, i)))) {
                         addAnnonceSuccess(client);
                     } else {
                         addAnnonceError(client);
@@ -181,10 +185,10 @@ public class Gestionnaire {
                 + "UPDATE_ANNONCE pseudo mdp id [domaine | prix | description]+ ***" + "\n"
                 + "CHECK_ALL_ANNONCES ***" + "\n"
                 + "CHECK_ANNONCE id ***" + "\n"
-                + "CHECK_ANNONCES_CLIENT id ***" + "\n"
+                + "CHECK_ANNONCES_CLIENT pseudo ***" + "\n"
                 + "CHECK_ANNONCES_DOMAINE domaine ***" + "\n"
                 + "NEW pseudo mdp ***" + "\n"
-                + "CONTACT ***" + "\n"
+                + "CONTACT pseudo ***" + "\n"
                 + "QUIT ***" + "\n"
                 + "HELP ***";
     }

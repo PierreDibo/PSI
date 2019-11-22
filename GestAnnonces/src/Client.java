@@ -48,7 +48,7 @@ public class Client {
     }
     public final int identifiant;
     private static int compteur = 0;
-    private static final Scanner SC = new Scanner(System.in);
+    //private static final Scanner SC = new Scanner(System.in);
 
     public Client() {
         this.identifiant = compteur++;
