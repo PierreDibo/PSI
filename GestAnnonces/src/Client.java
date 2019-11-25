@@ -4,10 +4,13 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.Scanner;
+import java.nio.ByteBuffer;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -19,6 +22,9 @@ import java.util.logging.Logger;
  */
 public class Client {
 
+    public static final int PACKET_SIZE = 576;
+    private static final int ADRESS_PORT = 0, INDEX_PORT = 1;
+
     static class ConsoleInputReadTask implements Callable<String> {
 
         @Override
@@ -28,8 +34,8 @@ public class Client {
                     new InputStreamReader(System.in));
             String input;
             do {
+
                 try {
-                    // wait until we have data to complete a readLine()
                     while (!br.ready()) {
                         Thread.sleep(200);
                     }
@@ -46,54 +52,84 @@ public class Client {
 
         }
     }
-    public final int identifiant;
-    private static int compteur = 0;
-    //private static final Scanner SC = new Scanner(System.in);
-
-    public Client() {
-        this.identifiant = compteur++;
-    }
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        Socket tcp;
+        if (args.length < 2 || args.length > 3) {
+            System.err.println("Usage : java Client ip port_tcp [port_upd]");
+        }
         try {
-            Socket socket = new Socket(InetAddress.getByName(args[0]), Integer.parseInt(args[1]));
+            InetAddress ia = InetAddress.getByName(args[ADRESS_PORT]);
+            int port = Integer.parseInt(args[INDEX_PORT]);
 
-            new Thread(new Ecrivain(socket)).start();
-            new Thread(new Ecouteur(socket)).start();
+            switch (args.length) {
+                case 2:
+                    tcp = new Socket(ia, port);
 
+                    new Thread(new Ecrivain(tcp)).start();
+                    new Thread(new Ecouteur(tcp)).start();
+
+                    break;
+                case 3:
+                    tcp = new Socket(ia, port);
+                    DatagramSocket udp = new DatagramSocket(port, ia);
+
+                    new Thread(new Ecrivain(tcp, udp)).start();
+                    new Thread(new Ecouteur(tcp, udp)).start();
+
+                    break;
+            }
         } catch (UnknownHostException ex) {
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
         }
+
     }
 
     static class Ecrivain implements Runnable {
 
-        private final Socket socket;
+        private final Socket sockettcp;
+        private final DatagramSocket socketudp;
 
         public Ecrivain(Socket socket) {
-            this.socket = socket;
+            this.sockettcp = socket;
+            this.socketudp = null;
+        }
+
+        public Ecrivain(Socket tcp, DatagramSocket upd) {
+            this.sockettcp = tcp;
+            this.socketudp = upd;
         }
 
         @Override
         public void run() {
-            //BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
             ConsoleInputReadTask console = new ConsoleInputReadTask();
-            while (this.socket != null && !this.socket.isInputShutdown()) {
+            while (true) {
                 try {
-                    BufferedWriter output = new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream()));
                     String content = console.call();
-                    while (!content.contains(Message.FIN_MESSAGE.trim())) {
+
+                    while (!content.contains(MessageType.END.getMessage())) {
                         content += " " + console.call();
                     }
-
-                    output.write(content + "\n");
-                    output.flush();
-
+                    if (!this.sockettcp.isClosed()) {
+                        BufferedWriter output = new BufferedWriter(new OutputStreamWriter(this.sockettcp.getOutputStream()));
+                        output.write(content);
+                        output.newLine();
+                        output.flush();
+                    }
+                    if (this.socketudp != null) {
+                        if (this.sockettcp.isClosed() && this.socketudp.isClosed()) {
+                            break;
+                        }
+                    } else {
+                        if (this.sockettcp.isClosed()) {
+                            break;
+                        }
+                    }
                 } catch (IOException ex) {
                     Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -103,22 +139,29 @@ public class Client {
 
     static class Ecouteur implements Runnable {
 
-        private final Socket socket;
+        private final Socket sockettcp;
+        private final DatagramSocket socketudp;
 
-        public Ecouteur(Socket socket) {
-            this.socket = socket;
+        public Ecouteur(Socket tcp) {
+            this.sockettcp = tcp;
+            this.socketudp = null;
+        }
+
+        public Ecouteur(Socket tcp, DatagramSocket udp) {
+            this.sockettcp = tcp;
+            this.socketudp = udp;
         }
 
         @Override
         public void run() {
             try {
-                BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                BufferedReader br = new BufferedReader(new InputStreamReader(sockettcp.getInputStream()));
                 String line;
 
                 while ((line = br.readLine()) != null) {
                     System.out.println(line);
-                    if (line.startsWith("AUREVOIR")) {
-                        this.socket.close();
+                    if (line.startsWith(MessageType.MSG_QUIT)) {
+                        this.sockettcp.close();
                         break;
                     }
                 }
@@ -128,4 +171,5 @@ public class Client {
             }
         }
     }
+
 }

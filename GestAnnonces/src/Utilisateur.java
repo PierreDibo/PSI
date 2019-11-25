@@ -1,26 +1,38 @@
 
 import java.net.Socket;
-import java.util.Objects;
 
 /**
  *
- * <<<<<<< HEAD
- * @a
- *
- * uthor dibop =======
  * @author Pierre Dibo
- * @author Aillerie Anthony >>>>>>> 3193ea92ca6bf9d787b84d025c52ca3449c0469c
+ * @author Aillerie Anthony
  */
 public class Utilisateur {
 
+    private final int identifiant;
+    private static int compteur = 0;
     private String pseudo;
     private String motDePasse;
     private final Socket socket;
 
     public Utilisateur(String pseudo, String motDePasse, Socket socket) {
+        this.identifiant = compteur++;
         this.pseudo = pseudo;
         this.motDePasse = motDePasse;
         this.socket = socket;
+    }
+
+    public Utilisateur(int id, String pseudo, String motDePasse, Socket socket) {
+        this.identifiant = id;
+        this.pseudo = pseudo;
+        this.motDePasse = motDePasse;
+        this.socket = socket;
+    }
+
+    public Utilisateur(int id) {
+        this.identifiant = id;
+        this.pseudo = null;
+        this.motDePasse = null;
+        this.socket = null;
     }
 
     public String getPseudo() {
@@ -45,9 +57,8 @@ public class Utilisateur {
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 43 * hash + Objects.hashCode(this.pseudo);
-        hash = 43 * hash + Objects.hashCode(this.motDePasse);
+        int hash = 3;
+        hash = 67 * hash + this.identifiant;
         return hash;
     }
 
@@ -63,14 +74,7 @@ public class Utilisateur {
             return false;
         }
         final Utilisateur other = (Utilisateur) obj;
-        if (!Objects.equals(this.pseudo, other.pseudo)) {
-            return false;
-        }
-        return Objects.equals(this.motDePasse, other.motDePasse);
+        return this.identifiant == other.identifiant;
     }
 
-    @Override
-    public String toString() {
-        return "Pseudo : " + pseudo;
-    }
 }
