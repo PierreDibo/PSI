@@ -7,22 +7,22 @@
 public enum MessageType {
     UTILISATEUR("L'utilisateur"),
     ANNONCE("L'annonce"),
-    NEW("NEW pseudo mdp[_]***"),
-    CONNECT("CONNECT pseudo mdp[_]***"),
-    UPDATE("UPDATE ancien_pseudo ancien_mdp nouveau_pseudo nouveau_mdp[_]***"),
-    DELETE("DELETE pseudo mdp[_]***"),
-    ADD_ANNONCE("ADD_ANNONCE pseudo mdp nomAnnonce domaine prix description[_]***"),
-    UPDATE_ANNONCE("UPDATE_ANNONCE pseudo mdp nomAnnonce domaine prix description[_]***"),
-    DELETE_ANNONCE("DELETE_ANNONCE pseudo mdp nomAnnonce domaine prix description[_]***"),
-    CHECK_ALL_ANNONCES("CHECK_ALL_ANNONCES[_]***"),
-    CHECK_ANNONCE("CHECK_ANNONCE id[_]***"),
-    CHECK_ANNONCES_CLIENT("CHECK_ANNONCES_CLIENT idUtilisateur[_]***"),
-    CHECK_ANNONCES_DOMAINE("CHECK_ANNONCES_DOMAINE domaine[_]***"),
-    CHECK_DOMAINES("CHECK_DOMAINES[_]***"),
-    OPEN_CALL_UTILISATEUR("OPEN_CALL idUtilisateur message[_]***"),
-    CLOSE_CALL("CLOSE_CALL idUtilisateur[_]***"),
-    QUIT("QUIT[_]***"),
-    HELP("HELP[_]***"),
+    NEW("NEW pseudo mdp[_]***", 4),
+    CONNECT("CONNECT pseudo mdp[_]***", 4),
+    UPDATE("UPDATE ancien_pseudo ancien_mdp nouveau_pseudo nouveau_mdp[_]***", 6),
+    DELETE("DELETE[_]***", 2),
+    ADD_ANNONCE("ADD_ANNONCE pseudo mdp nomAnnonce domaine prix description[_]***", 8),
+    UPDATE_ANNONCE("UPDATE_ANNONCE pseudo mdp nomAnnonce domaine prix description[_]***", 8),
+    DELETE_ANNONCE("DELETE_ANNONCE id[_]***", 3),
+    CHECK_ALL_ANNONCES("CHECK_ALL_ANNONCES[_]***", 2),
+    CHECK_ANNONCE("CHECK_ANNONCE id[_]***", 3),
+    CHECK_ANNONCES_CLIENT("CHECK_ANNONCES_CLIENT idUtilisateur[_]***", 3),
+    CHECK_ANNONCES_DOMAINE("CHECK_ANNONCES_DOMAINE domaine[_]***", 3),
+    CHECK_DOMAINES("CHECK_DOMAINES[_]***", 2),
+    OPEN_CALL_UTILISATEUR("OPEN_CALL idUtilisateur message[_]***", 4),
+    CLOSE_CALL("CLOSE_CALL idUtilisateur[_]***", 3),
+    QUIT("QUIT[_]***", 2),
+    HELP("HELP[_]***", 2),
     ADDED("être ajouté"),
     CONNECTED("être connecté"),
     UPDATED("être modifié"),
@@ -33,13 +33,24 @@ public enum MessageType {
     INVALID("INVALID message reçu");
 
     private final String message;
+    private final int params;
 
     MessageType(String msg) {
         this.message = msg;
+        this.params = 0;
+    }
+
+    MessageType(String msg, int prs) {
+        this.message = msg;
+        this.params = prs;
     }
 
     public String getMessage() {
-        return message;
+        return this.message;
+    }
+
+    public int getParameters() {
+        return this.params;
     }
 
     // <editor-fold defaultstate="collapsed" desc="MESSAGES UTILISATEUR">

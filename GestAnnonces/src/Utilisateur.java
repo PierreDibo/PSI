@@ -77,4 +77,9 @@ public class Utilisateur {
         return this.identifiant == other.identifiant;
     }
 
+    @Override
+    public String toString() {
+        return "Utilisateur{" + "identifiant=" + identifiant + ", pseudo=" + pseudo + '}';
+    }
+
 }

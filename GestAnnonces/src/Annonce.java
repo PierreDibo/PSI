@@ -57,7 +57,7 @@ public class Annonce {
     }
 
     public static Domaine getDomaine(String s) {
-        switch (s) {
+        switch (s.toLowerCase()) {
             case "voiture":
                 return Domaine.voiture;
             case "moto":

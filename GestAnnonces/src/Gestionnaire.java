@@ -10,6 +10,8 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -50,7 +52,6 @@ public class Gestionnaire {
             case 3:
                 break;
         }
-
     }
 
     static class Ecouteur implements Runnable {
@@ -63,6 +64,64 @@ public class Gestionnaire {
         public Ecouteur(Socket s) {
             this.socket = s;
             this.currentUser = null;
+        }
+
+        public static String checkAllAnnonces() {
+            String s = "";
+            for (Entry<Utilisateur, HashSet<Annonce>> entry : ANNONCES.entrySet()) {
+                HashSet<Annonce> values = entry.getValue();
+                if (values.isEmpty()) {
+                    continue;
+                }
+                s += entry.getKey() + "\n";
+                Iterator<Annonce> iter = values.iterator();
+                while (iter.hasNext()) {
+                    s += iter.next() + "\n";
+                }
+            }
+            return s;
+        }
+
+        public static String checkAllAnnoncesUtilisateur(int id) {
+            Utilisateur u = new Utilisateur(id);
+            HashSet<Annonce> annonces = ANNONCES.get(u);
+            String s = "";
+
+            if (annonces == null) {
+                return null;
+            }
+
+            s += u + "\n";
+            Iterator<Annonce> iter = annonces.iterator();
+            while (iter.hasNext()) {
+                s += iter.next() + "\n";
+            }
+            return s;
+        }
+
+        public static String checkAllAnnoncesDomaine(String d) {
+            String s = "", tmp = "";
+            for (Entry<Utilisateur, HashSet<Annonce>> entry : ANNONCES.entrySet()) {
+                HashSet<Annonce> values = entry.getValue();
+
+                if (values.isEmpty()) {
+                    continue;
+                }
+                s += entry.getKey() + "\n";
+                Iterator<Annonce> iter = values.iterator();
+                while (iter.hasNext()) {
+                    Annonce annonce = iter.next();
+                    if (Annonce.getDomaine(s).equals(annonce.getDomaine())) {
+                        tmp += annonce + "\n";
+                    }
+                }
+                if (tmp.compareTo("") != 0) {
+                    s += entry.getKey() + "\n";
+                    s += tmp;
+                }
+                tmp = "";
+            }
+            return s;
         }
 
         public boolean existsPseudo(String pseudo) {
@@ -78,28 +137,39 @@ public class Gestionnaire {
             return true;
         }
 
+        public boolean connectUtilisateur(String pseudo, String mdp) {
+            if (existsPseudo(pseudo)) {
+                return false;
+            }
+
+            this.currentUser = ANNONCES.keySet().stream()
+                    .filter((u) -> (u.getPseudo().equals(pseudo)) && (u.getMotDePasse().equals(mdp)))
+                    .findFirst().orElse(this.currentUser);
+
+            return this.currentUser != null;
+        }
+
         public void updateUtilisateur(String pseudo, String mdp) {
             this.currentUser.setPseudo(pseudo);
             this.currentUser.setMotDePasse(mdp);
         }
 
-        public void deleteUtilisateur(int id) {
-            HashSet<Annonce> annonces;
-            ANNONCES.remove(new Utilisateur(id));
+        public void deleteUtilisateur() {
+            ANNONCES.remove(this.currentUser).clear();
             this.currentUser = null;
         }
 
-        public boolean addAnnonce(Utilisateur u, Annonce e) {
+        public boolean addAnnonce(Annonce e) {
             HashSet<Annonce> annonces;
-            if ((annonces = ANNONCES.get(u)) == null) {
+            if (this.currentUser == null || (annonces = ANNONCES.get(this.currentUser)) == null) {
                 return false;
             }
             return annonces.add(e);
         }
 
-        public boolean updateAnnonce(Utilisateur u, Annonce e) {
+        public boolean updateAnnonce(Annonce e) {
             HashSet<Annonce> annonces;
-            if ((annonces = ANNONCES.get(u)) == null) {
+            if (this.currentUser == null || (annonces = ANNONCES.get(this.currentUser)) == null) {
                 return false;
             } else {
                 if (annonces.contains(e)) {
@@ -111,10 +181,10 @@ public class Gestionnaire {
             }
         }
 
-        public boolean deleteAnnonce(Utilisateur u, int id) {
+        public boolean deleteAnnonce(int id) {
             HashSet<Annonce> annonces;
 
-            if ((annonces = ANNONCES.get(u)) == null) {
+            if (this.currentUser == null || (annonces = ANNONCES.get(this.currentUser)) == null) {
                 return false;
             } else {
                 Annonce dummy = new Annonce(id);
@@ -136,49 +206,157 @@ public class Gestionnaire {
             }
             switch (message) {
                 case NEW:
-                    MessagesGestionnaire.todo(socket);
+                    if (msg.length == message.getParameters()) {
+                        if (addUtilisateur(msg[i++], msg[i++])) {
+                            MessagesGestionnaire.addUtilisateurSuccess(socket);
+                        } else {
+                            MessagesGestionnaire.addUtilisateurError(socket);
+                        }
+                    } else {
+                        MessagesGestionnaire.invalid(socket);
+                    }
                     break;
                 case CONNECT:
-                    MessagesGestionnaire.todo(socket);
+                    if (msg.length == message.getParameters()) {
+                        if (true) {
+                            MessagesGestionnaire.connectUtilisateurSuccess(socket);
+                        } else {
+                            MessagesGestionnaire.connectUtilisateurError(socket);
+                        }
+                    } else {
+                        MessagesGestionnaire.invalid(socket);
+                    }
                     break;
                 case UPDATE:
-                    MessagesGestionnaire.todo(socket);
+                    if (msg.length == message.getParameters()) {
+                        if (true) {
+                            MessagesGestionnaire.todo(socket);
+                        } else {
+
+                        }
+                    } else {
+                        MessagesGestionnaire.invalid(socket);
+                    }
                     break;
                 case DELETE:
-                    MessagesGestionnaire.todo(socket);
+                    if (msg.length == message.getParameters()) {
+                        if (true) {
+                            MessagesGestionnaire.todo(socket);
+                        } else {
+
+                        }
+                    } else {
+                        MessagesGestionnaire.invalid(socket);
+                    }
                     break;
                 case ADD_ANNONCE:
-                    MessagesGestionnaire.todo(socket);
+                    if (msg.length == message.getParameters()) {
+                        if (true) {
+                            MessagesGestionnaire.todo(socket);
+                        } else {
+
+                        }
+                    } else {
+                        MessagesGestionnaire.invalid(socket);
+                    }
                     break;
                 case UPDATE_ANNONCE:
-                    MessagesGestionnaire.todo(socket);
+                    if (msg.length == message.getParameters()) {
+                        if (true) {
+                            MessagesGestionnaire.todo(socket);
+                        } else {
+
+                        }
+                    } else {
+                        MessagesGestionnaire.invalid(socket);
+                    }
                     break;
                 case DELETE_ANNONCE:
-                    MessagesGestionnaire.todo(socket);
+                    if (msg.length == message.getParameters()) {
+                        if (deleteAnnonce(Integer.parseInt(msg[i++]))) {
+                            MessagesGestionnaire.joinThread(new Thread(new Ecrivain(socket, MessageType.MSG_ADD_ANNONCE_SUCCESS)));
+                        } else {
+                            MessagesGestionnaire.joinThread(new Thread(new Ecrivain(socket, MessageType.MSG_ADD_ANNONCE_FAILURE)));
+                        }
+                    } else {
+                        MessagesGestionnaire.invalid(socket);
+                    }
                     break;
                 case CHECK_ALL_ANNONCES:
-                    MessagesGestionnaire.todo(socket);
+                    if (msg.length == message.getParameters()) {
+                        MessagesGestionnaire.joinThread(new Thread(new Ecrivain(socket, checkAllAnnonces())));
+                    } else {
+                        MessagesGestionnaire.invalid(socket);
+                    }
                     break;
                 case CHECK_ANNONCE:
-                    MessagesGestionnaire.todo(socket);
+                    if (msg.length == message.getParameters()) {
+                        if (true) {
+                            MessagesGestionnaire.todo(socket);
+                        } else {
+
+                        }
+                    } else {
+                        MessagesGestionnaire.invalid(socket);
+                    }
                     break;
                 case CHECK_ANNONCES_CLIENT:
-                    MessagesGestionnaire.todo(socket);
+                    if (msg.length == message.getParameters()) {
+                        if (true) {
+                            MessagesGestionnaire.todo(socket);
+                        } else {
+
+                        }
+                    } else {
+                        MessagesGestionnaire.invalid(socket);
+                    }
                     break;
                 case CHECK_ANNONCES_DOMAINE:
-                    MessagesGestionnaire.todo(socket);
+                    if (msg.length == message.getParameters()) {
+                        if (true) {
+                            MessagesGestionnaire.todo(socket);
+                        } else {
+
+                        }
+                    } else {
+                        MessagesGestionnaire.invalid(socket);
+                    }
                     break;
                 case CHECK_DOMAINES:
-                    MessagesGestionnaire.todo(socket);
+                    if (msg.length == message.getParameters()) {
+                        if (true) {
+                            MessagesGestionnaire.todo(socket);
+                        } else {
+
+                        }
+                    } else {
+                        MessagesGestionnaire.invalid(socket);
+                    }
                     break;
                 case OPEN_CALL_UTILISATEUR:
-                    MessagesGestionnaire.todo(socket);
+                    if (msg.length == message.getParameters()) {
+                        if (true) {
+                            MessagesGestionnaire.todo(socket);
+                        } else {
+                            MessagesGestionnaire.todo(socket);
+                        }
+                    } else {
+                        MessagesGestionnaire.invalid(socket);
+                    }
                     break;
                 case CLOSE_CALL:
-                    MessagesGestionnaire.todo(socket);
+                    if (msg.length == message.getParameters()) {
+                        if (true) {
+                            MessagesGestionnaire.todo(socket);
+                        } else {
+                            MessagesGestionnaire.todo(socket);
+                        }
+                    } else {
+                        MessagesGestionnaire.invalid(socket);
+                    }
                     break;
                 case HELP:
-                    MessagesGestionnaire.todo(socket);
+                    MessagesGestionnaire.joinThread(new Thread(new Ecrivain(socket, MessageType.MSG_HELP)));
                     break;
                 case QUIT:
                     MessagesGestionnaire.joinThread(new Thread(new Ecrivain(socket, MessageType.MSG_QUIT)));
@@ -251,6 +429,14 @@ public class Gestionnaire {
 
         private static void addUtilisateurError(Socket s) throws InterruptedException {
             joinThread(new Thread(new Ecrivain(s, MessageType.MSG_ADD_UTILISATEUR_FAILURE)));
+        }
+
+        private static void connectUtilisateurSuccess(Socket s) throws InterruptedException {
+            joinThread(new Thread(new Ecrivain(s, MessageType.MSG_CONNECT_UTILISATEUR_SUCCESS)));
+        }
+
+        private static void connectUtilisateurError(Socket s) throws InterruptedException {
+            joinThread(new Thread(new Ecrivain(s, MessageType.MSG_CONNECT_UTILISATEUR_FAILURE)));
         }
 
         private static void updateUtilisateurSuccess(Socket s) throws InterruptedException {
