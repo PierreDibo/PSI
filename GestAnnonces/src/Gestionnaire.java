@@ -108,7 +108,6 @@ public class Gestionnaire {
                 if (values.isEmpty()) {
                     continue;
                 }
-                s += entry.getKey() + "\n";
                 Iterator<Annonce> iter = values.iterator();
                 while (iter.hasNext()) {
                     Annonce annonce = iter.next();
@@ -209,8 +208,7 @@ public class Gestionnaire {
 
         private static String getDescription(String[] msg, int index) {
             String s = "";
-
-            for (; index < msg.length - 1; index++) {
+            for (; index < msg.length; index++) {
                 s += msg[index] + " ";
             }
             return s;
@@ -249,7 +247,7 @@ public class Gestionnaire {
                     break;
                 case UPDATE:
                     if (msg.length == message.getParameters()) {
-                        if (updateUtilisateur(msg[i++], msg[i++])) {
+                        if (updateUtilisateur(msg[i+2], msg[i+3])) {
                             MessagesGestionnaire.updateUtilisateurSuccess(socket);
                         } else {
                             MessagesGestionnaire.updateUtilisateurError(socket);
@@ -260,7 +258,7 @@ public class Gestionnaire {
                     break;
                 case DELETE:
                     if (msg.length == message.getParameters()) {
-                        if (deleteAnnonce(Integer.parseInt(msg[i++]))) {
+                        if (deleteUtilisateur()) {
                             MessagesGestionnaire.deleteUtilisateurSuccess(socket);
                         } else {
                             MessagesGestionnaire.deleteUtilisateurError(socket);

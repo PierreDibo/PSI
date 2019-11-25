@@ -76,7 +76,7 @@ public class Client {
                 case 3:
                     tcp = new Socket(ia, port);
                     DatagramSocket udp = new DatagramSocket(port, ia);
-
+                    
                     new Thread(new Ecrivain(tcp, udp)).start();
                     new Thread(new Ecouteur(tcp, udp)).start();
 
@@ -169,6 +169,40 @@ public class Client {
             } catch (IOException ex) {
                 Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
             }
+        }
+    }
+    
+    static class EcouteurUDP implements Runnable {
+
+        private final DatagramSocket socketudp;
+
+        public EcouteurUDP(DatagramSocket udp) {
+            this.socketudp = udp;
+        }
+
+        @Override
+        public void run() {
+
+        	// Create a byte buffer/array for the receive Datagram packet
+        	byte[] receiveData = new byte[1024];
+
+        	// Set up a DatagramPacket to receive the data into
+        	DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+        	System.out.println("I am in the reader!");
+        	try {
+        		// Receive a packet from the server (blocks until the packets are received)
+        		socketudp.receive(receivePacket);
+        		System.out.println("Am i receiving?");
+        		// Extract the reply from the DatagramPacket      
+        		String serverReply =  new String(receivePacket.getData(), 0, receivePacket.getLength());
+
+        		// print to the screen
+        		System.out.println("UDPClient: Response from Server: \"" + serverReply + "\"\n");
+
+        	} 
+        	catch (IOException ex) {
+        		Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
+        	}
         }
     }
 
