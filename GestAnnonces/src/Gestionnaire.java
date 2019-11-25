@@ -8,6 +8,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -111,7 +112,7 @@ public class Gestionnaire {
                 Iterator<Annonce> iter = values.iterator();
                 while (iter.hasNext()) {
                     Annonce annonce = iter.next();
-                    if (Annonce.getDomaine(s).equals(annonce.getDomaine())) {
+                    if (Annonce.getDomaine(d).equals(annonce.getDomaine())) {
                         tmp += annonce + "\n";
                     }
                 }
@@ -138,7 +139,7 @@ public class Gestionnaire {
         }
 
         public boolean connectUtilisateur(String pseudo, String mdp) {
-            if (existsPseudo(pseudo)) {
+            if (!existsPseudo(pseudo)) {
                 return false;
             }
 
@@ -149,14 +150,24 @@ public class Gestionnaire {
             return this.currentUser != null;
         }
 
-        public void updateUtilisateur(String pseudo, String mdp) {
-            this.currentUser.setPseudo(pseudo);
-            this.currentUser.setMotDePasse(mdp);
+        public boolean updateUtilisateur(String pseudo, String mdp) {
+            if (this.currentUser == null) {
+                return false;
+            } else {
+                this.currentUser.setPseudo(pseudo);
+                this.currentUser.setMotDePasse(mdp);
+                return true;
+            }
         }
 
-        public void deleteUtilisateur() {
-            ANNONCES.remove(this.currentUser).clear();
-            this.currentUser = null;
+        public boolean deleteUtilisateur() {
+            if (this.currentUser == null) {
+                return false;
+            } else {
+                ANNONCES.remove(this.currentUser).clear();
+                this.currentUser = null;
+                return true;
+            }
         }
 
         public boolean addAnnonce(Annonce e) {
@@ -196,6 +207,15 @@ public class Gestionnaire {
             }
         }
 
+        private static String getDescription(String[] msg, int index) {
+            String s = "";
+
+            for (; index < msg.length - 1; index++) {
+                s += msg[index] + " ";
+            }
+            return s;
+        }
+
         private void parse(String[] msg, Socket socket) throws IOException, InterruptedException {
             MessageType message;
             int i = 0;
@@ -218,7 +238,7 @@ public class Gestionnaire {
                     break;
                 case CONNECT:
                     if (msg.length == message.getParameters()) {
-                        if (true) {
+                        if (connectUtilisateur(msg[i++], msg[i++])) {
                             MessagesGestionnaire.connectUtilisateurSuccess(socket);
                         } else {
                             MessagesGestionnaire.connectUtilisateurError(socket);
@@ -229,10 +249,10 @@ public class Gestionnaire {
                     break;
                 case UPDATE:
                     if (msg.length == message.getParameters()) {
-                        if (true) {
-                            MessagesGestionnaire.todo(socket);
+                        if (updateUtilisateur(msg[i++], msg[i++])) {
+                            MessagesGestionnaire.updateUtilisateurSuccess(socket);
                         } else {
-
+                            MessagesGestionnaire.updateUtilisateurError(socket);
                         }
                     } else {
                         MessagesGestionnaire.invalid(socket);
@@ -240,32 +260,32 @@ public class Gestionnaire {
                     break;
                 case DELETE:
                     if (msg.length == message.getParameters()) {
-                        if (true) {
-                            MessagesGestionnaire.todo(socket);
+                        if (deleteAnnonce(Integer.parseInt(msg[i++]))) {
+                            MessagesGestionnaire.deleteUtilisateurSuccess(socket);
                         } else {
-
+                            MessagesGestionnaire.deleteUtilisateurError(socket);
                         }
                     } else {
                         MessagesGestionnaire.invalid(socket);
                     }
                     break;
                 case ADD_ANNONCE:
-                    if (msg.length == message.getParameters()) {
-                        if (true) {
-                            MessagesGestionnaire.todo(socket);
+                    if (msg.length >= message.getParameters()) {
+                        if (addAnnonce(new Annonce(msg[i++], Annonce.getDomaine(msg[i++].toLowerCase()), Long.parseLong(msg[i++]), getDescription(msg, i)))) {
+                            MessagesGestionnaire.addAnnonceSuccess(socket);
                         } else {
-
+                            MessagesGestionnaire.addAnnonceError(socket);
                         }
                     } else {
                         MessagesGestionnaire.invalid(socket);
                     }
                     break;
                 case UPDATE_ANNONCE:
-                    if (msg.length == message.getParameters()) {
-                        if (true) {
-                            MessagesGestionnaire.todo(socket);
+                    if (msg.length >= message.getParameters()) {
+                        if (updateAnnonce(new Annonce(Integer.parseInt(msg[i++]), msg[i++], Annonce.getDomaine(msg[i++].toLowerCase()), Long.parseLong(msg[i++]), getDescription(msg, i)))) {
+                            MessagesGestionnaire.updateAnnonceSuccess(socket);
                         } else {
-
+                            MessagesGestionnaire.updateAnnonceError(socket);
                         }
                     } else {
                         MessagesGestionnaire.invalid(socket);
@@ -274,9 +294,9 @@ public class Gestionnaire {
                 case DELETE_ANNONCE:
                     if (msg.length == message.getParameters()) {
                         if (deleteAnnonce(Integer.parseInt(msg[i++]))) {
-                            MessagesGestionnaire.joinThread(new Thread(new Ecrivain(socket, MessageType.MSG_ADD_ANNONCE_SUCCESS)));
+                            MessagesGestionnaire.deleteAnnonceSuccess(socket);
                         } else {
-                            MessagesGestionnaire.joinThread(new Thread(new Ecrivain(socket, MessageType.MSG_ADD_ANNONCE_FAILURE)));
+                            MessagesGestionnaire.deleteAnnonceError(socket);
                         }
                     } else {
                         MessagesGestionnaire.invalid(socket);
@@ -291,49 +311,33 @@ public class Gestionnaire {
                     break;
                 case CHECK_ANNONCE:
                     if (msg.length == message.getParameters()) {
-                        if (true) {
-                            MessagesGestionnaire.todo(socket);
-                        } else {
-
-                        }
+                        MessagesGestionnaire.todo(socket);
                     } else {
                         MessagesGestionnaire.invalid(socket);
                     }
                     break;
                 case CHECK_ANNONCES_CLIENT:
                     if (msg.length == message.getParameters()) {
-                        if (true) {
-                            MessagesGestionnaire.todo(socket);
-                        } else {
-
-                        }
+                        MessagesGestionnaire.joinThread(new Thread(new Ecrivain(socket, checkAllAnnoncesUtilisateur(Integer.parseInt(msg[i++])))));
                     } else {
                         MessagesGestionnaire.invalid(socket);
                     }
                     break;
                 case CHECK_ANNONCES_DOMAINE:
                     if (msg.length == message.getParameters()) {
-                        if (true) {
-                            MessagesGestionnaire.todo(socket);
-                        } else {
-
-                        }
+                        MessagesGestionnaire.joinThread(new Thread(new Ecrivain(socket, checkAllAnnoncesDomaine(msg[i++]))));
                     } else {
                         MessagesGestionnaire.invalid(socket);
                     }
                     break;
                 case CHECK_DOMAINES:
                     if (msg.length == message.getParameters()) {
-                        if (true) {
-                            MessagesGestionnaire.todo(socket);
-                        } else {
-
-                        }
+                        MessagesGestionnaire.joinThread(new Thread(new Ecrivain(socket, Domaine.descripteur())));
                     } else {
                         MessagesGestionnaire.invalid(socket);
                     }
                     break;
-                case OPEN_CALL_UTILISATEUR:
+                case OPEN_CALL:
                     if (msg.length == message.getParameters()) {
                         if (true) {
                             MessagesGestionnaire.todo(socket);
@@ -389,6 +393,7 @@ public class Gestionnaire {
             } catch (IOException | InterruptedException ex) {
                 Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
             }
+            this.currentUser = null;
         }
     }
 
