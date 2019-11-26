@@ -21,7 +21,8 @@ import java.util.logging.Logger;
 public class Client {
 
     public static final int PACKET_SIZE = 576;
-    private static final int ADRESS_PORT = 0, INDEX_PORT = 1;
+    private static final int IP_GESTIONNAIRE = 0, PORT_GESTIONNAIRE = 1, IP_CLIENT = 2, PORT_CLIENT = 3;
+    private static int WITHOUTCHAT = 2, WITHCHAT = 4;
 
     static class ConsoleInputReadTask implements Callable<String> {
 
@@ -56,12 +57,12 @@ public class Client {
      */
     public static void main(String[] args) {
         Socket tcp;
-        if (args.length < 2 || args.length > 3) {
-            System.err.println("Usage : java Client ip port_tcp [port_upd]");
+        if (args.length != 2 && args.length != 4) {
+            System.err.println("Usage : java Client ip_server port_tcp [ip_client port_upd]");
         }
         try {
-            InetAddress ia = InetAddress.getByName(args[ADRESS_PORT]);
-            int port = Integer.parseInt(args[INDEX_PORT]);
+            InetAddress ia = InetAddress.getByName(args[IP_GESTIONNAIRE]);
+            int port = Integer.parseInt(args[PORT_GESTIONNAIRE]);
 
             switch (args.length) {
                 case 2:
@@ -71,11 +72,13 @@ public class Client {
                     new Thread(new EcouteurTCP(tcp)).start();
 
                     break;
-                case 3:
+                case 4:
+                    InetAddress iaUs = InetAddress.getByName(args[IP_CLIENT]);
+                    int portUs = Integer.parseInt(args[PORT_CLIENT]);
                     tcp = new Socket(ia, port);
-                    DatagramSocket udp = new DatagramSocket(port, ia);
+                    DatagramSocket udp = new DatagramSocket(portUs, iaUs);
 
-                    new Thread(new Ecrivain(tcp, udp)).start();
+                    new Thread(new Ecrivain(tcp)).start();
                     new Thread(new EcouteurTCP(tcp)).start();
                     new Thread(new EcouteurUDP(udp)).start();
                     break;
@@ -91,18 +94,11 @@ public class Client {
     static class Ecrivain implements Runnable {
 
         private final Socket sockettcp;
-        private final DatagramSocket socketudp;
 
         private static final String ESP = " ";
 
         public Ecrivain(Socket socket) {
             this.sockettcp = socket;
-            this.socketudp = null;
-        }
-
-        public Ecrivain(Socket tcp, DatagramSocket upd) {
-            this.sockettcp = tcp;
-            this.socketudp = upd;
         }
 
         private void parse(String content) throws IOException {
@@ -114,27 +110,26 @@ public class Client {
             } catch (IllegalArgumentException ex) {
                 message = MessageType.INVALID;
             }
-            if (this.socketudp != null && !this.socketudp.isClosed()) {
-                switch (message) {
-                    case CALL_OPEN:
-                    case CALL:
-                    case CALL_CLOSE:
-                        byte buf[] = content.getBytes();
-                        DatagramPacket packet
-                                = new DatagramPacket(buf, buf.length,
-                                        this.socketudp.getInetAddress(),
-                                        this.socketudp.getPort());
-                        this.socketudp.send(packet);
-                        break;
-                    case INVALID:
-                        System.out.println(MessageType.MSG_INVALID);
-                        break;
-                    default:
-                        writetcp(content);
-                        break;
-                }
-            } else {
-                writetcp(content);
+            switch (message) {
+                case CALL_OPEN:
+                case CALL:
+                case CALL_CLOSE:
+                    InetAddress iaddr = InetAddress.getByName(input[i++]);
+                    int port = Integer.parseInt(input[i++]);
+                    DatagramSocket dtDock = new DatagramSocket(port, iaddr);
+                    byte buf[] = content.getBytes();
+                    DatagramPacket packet
+                            = new DatagramPacket(buf, buf.length,
+                                    dtDock.getInetAddress(),
+                                    dtDock.getPort());
+                    dtDock.send(packet);
+                    break;
+                case INVALID:
+                    System.out.println(MessageType.MSG_INVALID);
+                    break;
+                default:
+                    writetcp(content);
+                    break;
             }
 
         }
@@ -160,17 +155,10 @@ public class Client {
                     }
 
                     //content = content.replace(MessageType.END.getMessage(), ESP);
-
                     parse(content);
 
-                    if (this.socketudp != null) {
-                        if (this.sockettcp.isClosed() && this.socketudp.isClosed()) {
-                            break;
-                        }
-                    } else {
-                        if (this.sockettcp.isClosed()) {
-                            break;
-                        }
+                    if (this.sockettcp.isClosed()) {
+                        break;
                     }
                 } catch (IOException ex) {
                     Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
@@ -217,26 +205,29 @@ public class Client {
 
         @Override
         public void run() {
-
-            // Create a byte buffer/array for the receive Datagram packet
-            byte[] receiveData = new byte[PACKET_SIZE];
-
-            // Set up a DatagramPacket to receive the data into
-            DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-            System.out.println("I am in the reader!");
             try {
-                // Receive a packet from the server (blocks until the packets are received)
-                socketudp.receive(receivePacket);
-                System.out.println("Am i receiving?");
-                // Extract the reply from the DatagramPacket      
-                String serverReply = new String(receivePacket.getData(), 0, receivePacket.getLength());
+                while (true) {
+                    byte[] buffer = new byte[PACKET_SIZE];
+                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
-                // print to the screen
-                System.out.println("UDPClient: Response from Server: \"" + serverReply + "\"\n");
+                    socketudp.receive(packet);
 
+                    String str = new String(packet.getData());
+
+                    System.out.println(str);
+                    packet.setLength(buffer.length);
+                }
             } catch (IOException ex) {
-                Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
             }
+        }
+    }
+
+    static class MessagesClient {
+
+        public static void joinThread(Thread t) throws InterruptedException {
+            t.start();
+            t.join();
         }
     }
 
