@@ -7,7 +7,7 @@
 public enum MessageType {
     UTILISATEUR("L'utilisateur"),
     ANNONCE("L'annonce"),
-    NEW("NEW pseudo mdp[_]***", 3),
+    NEW("NEW pseudo mdp ipClient portUDP[_]***", 5),
     CONNECT("CONNECT pseudo mdp[_]***", 3),
     UPDATE("UPDATE ancien_pseudo ancien_mdp nouveau_pseudo nouveau_mdp[_]***", 5),
     DELETE("DELETE[_]***", 1),

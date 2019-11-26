@@ -13,12 +13,25 @@ public class Utilisateur {
     private String pseudo;
     private String motDePasse;
     private final Socket socket;
+    private final String ipClient;
+    private final int portUdp;
 
     public Utilisateur(String pseudo, String motDePasse, Socket socket) {
         this.identifiant = compteur++;
         this.pseudo = pseudo;
         this.motDePasse = motDePasse;
         this.socket = socket;
+        this.ipClient = null;
+        this.portUdp = 0;
+    }
+    
+    public Utilisateur(String pseudo, String motDePasse, Socket socket, String ipClient, int portUdp) {
+        this.identifiant = compteur++;
+        this.pseudo = pseudo;
+        this.motDePasse = motDePasse;
+        this.socket = socket;
+        this.ipClient = ipClient;
+        this.portUdp = portUdp;
     }
 
     public Utilisateur(int id, String pseudo, String motDePasse, Socket socket) {
@@ -26,6 +39,8 @@ public class Utilisateur {
         this.pseudo = pseudo;
         this.motDePasse = motDePasse;
         this.socket = socket;
+        this.ipClient = null;
+        this.portUdp = 0;
     }
 
     public Utilisateur(int id) {
@@ -33,6 +48,8 @@ public class Utilisateur {
         this.pseudo = null;
         this.motDePasse = null;
         this.socket = null;
+        this.ipClient = null;
+        this.portUdp = 0;
     }
 
     public int getIdentifiant() {
@@ -59,7 +76,15 @@ public class Utilisateur {
         this.motDePasse = motDePasse;
     }
 
-    @Override
+    public String getIpClient() {
+		return ipClient;
+	}
+
+	public int getPortUdp() {
+		return portUdp;
+	}
+
+	@Override
     public int hashCode() {
         int hash = 3;
         hash = 67 * hash + this.identifiant;

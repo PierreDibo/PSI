@@ -138,11 +138,11 @@ public class Gestionnaire {
             return ANNONCES.keySet().stream().anyMatch((u) -> (u.getPseudo().equals(pseudo)));
         }
 
-        public boolean addUtilisateur(String pseudo, String mdp) {
+        public boolean addUtilisateur(String pseudo, String mdp, String ipClient, String portUdp) {
             if (currentUser != null || existsPseudo(pseudo)) {
                 return false;
             }
-            this.currentUser = new Utilisateur(pseudo, mdp, this.socket);
+            this.currentUser = new Utilisateur(pseudo, mdp, this.socket, ipClient, Integer.parseInt(portUdp));
             ANNONCES.put(this.currentUser, new HashSet<>());
             return true;
         }
@@ -235,7 +235,7 @@ public class Gestionnaire {
             switch (message) {
                 case NEW:
                     if (msg.length == message.getParameters()) {
-                        if (addUtilisateur(msg[i++], msg[i++])) {
+                        if (addUtilisateur(msg[i++], msg[i++], msg[i++], msg[i++])) {
                             MessagesGestionnaire.addUtilisateurSuccess(socket);
                         } else {
                             MessagesGestionnaire.addUtilisateurError(socket);
@@ -352,8 +352,8 @@ public class Gestionnaire {
                             MessagesGestionnaire.existsUtilisateurFailure(socket);
                         } else {
                             MessagesGestionnaire.existsUtilisateurSuccess(socket,
-                                    u.getSocket().getInetAddress().getHostAddress(),
-                                    u.getSocket().getPort());
+                                    u.getIpClient(),
+                                    u.getPortUdp());
                         }
                     } else {
                         MessagesGestionnaire.invalid(socket);
