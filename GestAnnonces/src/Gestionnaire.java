@@ -8,7 +8,6 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -335,7 +334,14 @@ public class Gestionnaire {
                         MessagesGestionnaire.invalid(socket);
                     }
                     break;
-                case OPEN_CALL:
+                case WHOIS:
+                    if (msg.length == message.getParameters()) {
+                        MessagesGestionnaire.joinThread(new Thread(new Ecrivain(socket, Domaine.descripteur())));
+                    } else {
+                        MessagesGestionnaire.invalid(socket);
+                    }
+                    break;
+                case CALL_OPEN:
                     if (msg.length == message.getParameters()) {
                         if (true) {
                             MessagesGestionnaire.todo(socket);
@@ -346,7 +352,7 @@ public class Gestionnaire {
                         MessagesGestionnaire.invalid(socket);
                     }
                     break;
-                case CLOSE_CALL:
+                case CALL_CLOSE:
                     if (msg.length == message.getParameters()) {
                         if (true) {
                             MessagesGestionnaire.todo(socket);
