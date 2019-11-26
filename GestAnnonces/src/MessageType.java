@@ -55,54 +55,60 @@ public enum MessageType {
         return this.params;
     }
 
+    public static final String UNDERSCORE = "_";
     // <editor-fold defaultstate="collapsed" desc="MESSAGES UTILISATEUR">
     public static final String MSG_ADD_UTILISATEUR_SUCCESS
-            = NEW.name() + "\n"
+            = NEW.name() + UNDERSCORE + SUCCESS.name() + "\n"
             + UTILISATEUR.getMessage() + " "
             + SUCCESS.getMessage() + " "
             + ADDED.getMessage();
 
     public static final String MSG_CONNECT_UTILISATEUR_SUCCESS
-            = CONNECT.name() + "\n"
+            = CONNECT.name() + UNDERSCORE + SUCCESS.name() + "\n"
             + UTILISATEUR.getMessage() + " "
             + SUCCESS.getMessage() + " "
             + CONNECTED.getMessage();
 
     public static final String MSG_UPDATE_UTILISATEUR_SUCCESS
-            = UPDATE.name() + "\n"
+            = UPDATE.name() + UNDERSCORE + SUCCESS.name() + "\n"
             + UTILISATEUR.getMessage() + " "
             + SUCCESS.getMessage() + " "
             + UPDATED.getMessage();
 
     public static final String MSG_DELETE_UTILISATEUR_SUCCESS
-            = DELETE.name() + "\n"
+            = DELETE.name() + UNDERSCORE + SUCCESS.name() + "\n"
             + UTILISATEUR.getMessage() + " "
             + SUCCESS.getMessage() + " "
             + DELETED.getMessage();
 
     public static final String MSG_ADD_UTILISATEUR_FAILURE
-            = NEW.name() + "\n"
+            = NEW.name() + UNDERSCORE + FAILURE.name() + "\n"
             + UTILISATEUR.getMessage() + " "
             + FAILURE.getMessage() + " "
             + ADDED.getMessage();
 
     public static final String MSG_CONNECT_UTILISATEUR_FAILURE
-            = CONNECT.name() + "\n"
+            = CONNECT.name() + UNDERSCORE + FAILURE.name() + "\n"
             + UTILISATEUR.getMessage() + " "
             + FAILURE.getMessage() + " "
             + CONNECTED.getMessage();
 
     public static final String MSG_UPDATE_UTILISATEUR_FAILURE
-            = UPDATE.name() + "\n"
+            = UPDATE.name() + UNDERSCORE + FAILURE.name() + "\n"
             + UTILISATEUR.getMessage() + " "
             + FAILURE.getMessage() + " "
             + UPDATED.getMessage();
 
     public static final String MSG_DELETE_UTILISATEUR_FAILURE
-            = DELETE.name() + "\n"
+            = DELETE.name() + UNDERSCORE + FAILURE.name() + "\n"
             + UTILISATEUR.getMessage() + " "
             + FAILURE.getMessage() + " "
             + DELETED.getMessage();
+
+    public static final String MSG_WHOIS_SUCCESS
+            = WHOIS.name() + UNDERSCORE + SUCCESS.name() + "\n";
+    public static final String MSG_WHOIS_FAILURE
+            = WHOIS.name() + UNDERSCORE + FAILURE.name() + "\n";
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="MESSAGES ANNONCES">

@@ -34,9 +34,9 @@ public class Utilisateur {
         this.motDePasse = null;
         this.socket = null;
     }
-    
+
     public int getIdentifiant() {
-    	return identifiant;
+        return identifiant;
     }
 
     public String getPseudo() {

@@ -84,6 +84,7 @@ public class Gestionnaire {
 
         public static String checkAllAnnoncesUtilisateur(int id) {
             Utilisateur u = getUtilisateur(id);
+
             HashSet<Annonce> annonces = ANNONCES.get(u);
             System.out.println(annonces);
             String s = "";
@@ -99,12 +100,12 @@ public class Gestionnaire {
             }
             return s;
         }
-        
+
         private static Utilisateur getUtilisateur(int id) {
-        	for (Utilisateur entry : ANNONCES.keySet()) {
-        		if (entry.getIdentifiant() == id) {
-        			return entry;
-        		}
+            for (Utilisateur entry : ANNONCES.keySet()) {
+                if (entry.getIdentifiant() == id) {
+                    return entry;
+                }
             }
             return null;
         }
@@ -256,7 +257,7 @@ public class Gestionnaire {
                     break;
                 case UPDATE:
                     if (msg.length == message.getParameters()) {
-                        if (updateUtilisateur(msg[i+2], msg[i+3])) {
+                        if (updateUtilisateur(msg[i + 2], msg[i + 3])) {
                             MessagesGestionnaire.updateUtilisateurSuccess(socket);
                         } else {
                             MessagesGestionnaire.updateUtilisateurError(socket);
@@ -346,7 +347,14 @@ public class Gestionnaire {
                     break;
                 case WHOIS:
                     if (msg.length == message.getParameters()) {
-                        MessagesGestionnaire.joinThread(new Thread(new Ecrivain(socket, Domaine.descripteur())));
+                        Utilisateur u = getUtilisateur(Integer.parseInt(msg[i++]));
+                        if (u == null) {
+                            MessagesGestionnaire.existsUtilisateurFailure(socket);
+                        } else {
+                            MessagesGestionnaire.existsUtilisateurSuccess(socket,
+                                    u.getSocket().getInetAddress().getHostAddress(),
+                                    u.getSocket().getPort());
+                        }
                     } else {
                         MessagesGestionnaire.invalid(socket);
                     }
@@ -500,6 +508,15 @@ public class Gestionnaire {
             joinThread(new Thread(new Ecrivain(s, MessageType.MSG_DELETE_ANNONCE_FAILURE)));
         }
         // </editor-fold>
+
+        private static void existsUtilisateurSuccess(Socket s, String ip, int port) throws InterruptedException {
+            joinThread(new Thread(new Ecrivain(s, MessageType.MSG_WHOIS_SUCCESS)));
+            joinThread(new Thread(new Ecrivain(s, ip + ":" + port)));
+        }
+
+        private static void existsUtilisateurFailure(Socket s) throws InterruptedException {
+            joinThread(new Thread(new Ecrivain(s, MessageType.MSG_WHOIS_FAILURE)));
+        }
 
         private static void todo(Socket s) throws InterruptedException {
             joinThread(new Thread(new Ecrivain(s, MessageType.MSG_TODO)));
