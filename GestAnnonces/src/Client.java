@@ -159,7 +159,7 @@ public class Client {
                         content += " " + console.call();
                     }
 
-                    content = content.replace(MessageType.END.getMessage(), ESP);
+                    //content = content.replace(MessageType.END.getMessage(), ESP);
 
                     parse(content);
 
