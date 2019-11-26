@@ -8,7 +8,10 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
@@ -20,6 +23,8 @@ import java.util.logging.Logger;
  * @author Aillerie Anthony
  */
 public class Client {
+
+    public static final int ATTENTE = 100;
     public static final int PACKET_SIZE = 576;
     private static final int IP_GESTIONNAIRE = 0, PORT_GESTIONNAIRE = 1, IP_CLIENT = 2, PORT_CLIENT = 3;
     private static int WITHOUTCHAT = 2, WITHCHAT = 4;
@@ -58,7 +63,7 @@ public class Client {
     public static void main(String[] args) {
         Socket tcp;
         if (args.length != 2 && args.length != 4) {
-            System.err.println("Usage : java Client ip_server port_tcp [ip_client port_upd]");
+            System.err.println("Usage : java Client ip_gestionnaire port_gestionnaire [ip_client port_client]");
         }
         try {
             InetAddress ia = InetAddress.getByName(args[IP_GESTIONNAIRE]);
@@ -76,11 +81,10 @@ public class Client {
                     InetAddress iaUs = InetAddress.getByName(args[IP_CLIENT]);
                     int portUs = Integer.parseInt(args[PORT_CLIENT]);
                     tcp = new Socket(ia, port);
-                    DatagramSocket udp = new DatagramSocket(portUs, iaUs);
 
                     new Thread(new Ecrivain(tcp)).start();
                     new Thread(new EcouteurTCP(tcp)).start();
-                    new Thread(new EcouteurUDP(udp)).start();
+                    new Thread(new Server(iaUs, portUs)).start();
                     break;
             }
         } catch (UnknownHostException ex) {
@@ -88,7 +92,7 @@ public class Client {
         } catch (IOException ex) {
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
         }
-
+          */
     }
 
     static class Ecrivain implements Runnable {
@@ -114,33 +118,27 @@ public class Client {
                 case CALL_OPEN:
                 case CALL:
                 case CALL_CLOSE:
-                    //InetAddress iaddr = InetAddress.getByName(input[i++]);
-                    //int port = Integer.parseInt(input[i++]);
+                    InetAddress iaddr = InetAddress.getByName(input[i++]);
+                    int port = Integer.parseInt(input[i++]);
                     //System.out.println(iaddr.toString());
                     //DatagramSocket dtDock = new DatagramSocket(port, iaddr);
-                    DatagramSocket dtDock = new DatagramSocket(null);
-                    InetSocketAddress addr = new InetSocketAddress(input[i++], Integer.parseInt(input[i++]));
-                    dtDock.bind(addr);
-                    byte buf[] = content.getBytes();
-                    DatagramPacket packet
-                            = new DatagramPacket(buf, buf.length,
-                                    dtDock.getInetAddress(),
-                                    dtDock.getPort());
-                    dtDock.send(packet);
+                    Socket socket = new Socket(iaddr, port);
+                    writetcp(content, socket);
+                    
                     break;
                 case INVALID:
                     System.out.println(MessageType.MSG_INVALID);
                     break;
                 default:
-                    writetcp(content);
+                    writetcp(content, this.sockettcp);
                     break;
             }
 
         }
 
-        private void writetcp(String content) throws IOException {
-            if (!this.sockettcp.isClosed()) {
-                BufferedWriter output = new BufferedWriter(new OutputStreamWriter(this.sockettcp.getOutputStream()));
+        private void writetcp(String content, Socket socket) throws IOException {
+            if (!socket.isClosed()) {
+                BufferedWriter output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
                 output.write(content);
                 output.newLine();
                 output.flush();
@@ -199,30 +197,27 @@ public class Client {
         }
     }
 
-    static class EcouteurUDP implements Runnable {
+    static class Server implements Runnable {
 
-        private final DatagramSocket socketudp;
+        private final InetAddress iaddr;
+        private final int port;
 
-        public EcouteurUDP(DatagramSocket udp) {
-            this.socketudp = udp;
+        public Server(InetAddress s, int p) {
+            this.iaddr = s;
+            this.port = p;
         }
 
         @Override
         public void run() {
-            try {
+            try (final ServerSocket server = new ServerSocket(port, ATTENTE, iaddr)) {
                 while (true) {
-                    byte[] buffer = new byte[PACKET_SIZE];
-                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-
-                    socketudp.receive(packet);
-
-                    String str = new String(packet.getData());
-
-                    System.out.println(str);
-                    packet.setLength(buffer.length);
+                    Socket clientSocket = server.accept();
+                    new Thread(new EcouteurClient(clientSocket)).start();
                 }
+            } catch (UnknownHostException ex) {
+                Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
             } catch (IOException ex) {
-                Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
@@ -232,6 +227,30 @@ public class Client {
         public static void joinThread(Thread t) throws InterruptedException {
             t.start();
             t.join();
+        }
+    }
+
+    private static class EcouteurClient implements Runnable {
+
+        private Socket socket;
+
+        public EcouteurClient(Socket clientSocket) {
+            this.socket = clientSocket;
+        }
+
+        @Override
+        public void run() {
+            while (this.socket.isConnected()) {
+                try {
+                    BufferedReader input = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
+                    String msg;
+                    while ((msg = input.readLine()) != null) {
+                        System.out.println(msg);
+                    }
+                } catch (IOException ex) {
+                    Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
         }
     }
 
