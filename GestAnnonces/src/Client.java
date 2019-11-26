@@ -7,6 +7,7 @@ import java.io.OutputStreamWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.concurrent.Callable;
@@ -113,9 +114,13 @@ public class Client {
                 case CALL_OPEN:
                 case CALL:
                 case CALL_CLOSE:
-                    InetAddress iaddr = InetAddress.getByName(input[i++]);
-                    int port = Integer.parseInt(input[i++]);
-                    DatagramSocket dtDock = new DatagramSocket(port, iaddr);
+                    //InetAddress iaddr = InetAddress.getByName(input[i++]);
+                    //int port = Integer.parseInt(input[i++]);
+                    //System.out.println(iaddr.toString());
+                    //DatagramSocket dtDock = new DatagramSocket(port, iaddr);
+                    DatagramSocket dtDock = new DatagramSocket(null);
+                    InetSocketAddress addr = new InetSocketAddress(input[i++], Integer.parseInt(input[i++]));
+                    dtDock.bind(addr);
                     byte buf[] = content.getBytes();
                     DatagramPacket packet
                             = new DatagramPacket(buf, buf.length,
