@@ -84,8 +84,9 @@ public class Gestionnaire {
         }
 
         public static String checkAllAnnoncesUtilisateur(int id) {
-            Utilisateur u = new Utilisateur(id);
+            Utilisateur u = getUtilisateur(id);
             HashSet<Annonce> annonces = ANNONCES.get(u);
+            System.out.println(annonces);
             String s = "";
 
             if (annonces == null) {
@@ -98,6 +99,15 @@ public class Gestionnaire {
                 s += iter.next() + "\n";
             }
             return s;
+        }
+        
+        private static Utilisateur getUtilisateur(int id) {
+        	for (Utilisateur entry : ANNONCES.keySet()) {
+        		if (entry.getIdentifiant() == id) {
+        			return entry;
+        		}
+            }
+            return null;
         }
 
         public static String checkAllAnnoncesDomaine(String d) {

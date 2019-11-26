@@ -34,6 +34,10 @@ public class Utilisateur {
         this.motDePasse = null;
         this.socket = null;
     }
+    
+    public int getIdentifiant() {
+    	return identifiant;
+    }
 
     public String getPseudo() {
         return pseudo;
@@ -79,7 +83,7 @@ public class Utilisateur {
 
     @Override
     public String toString() {
-        return "Utilisateur{" + "identifiant=" + identifiant + ", pseudo=" + pseudo + '}';
+        return "Utilisateur -> " + "pseudo : " + pseudo + ", identifiant : " + identifiant;
     }
 
 }
