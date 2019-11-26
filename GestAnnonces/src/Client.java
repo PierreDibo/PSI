@@ -19,244 +19,215 @@ import java.util.logging.Logger;
  * @author Aillerie Anthony
  */
 public class Client {
+    public static final int PACKET_SIZE = 576;
+    private static final int IP_GESTIONNAIRE = 0, PORT_GESTIONNAIRE = 1, IP_CLIENT = 2, PORT_CLIENT = 3;
+    private static int WITHOUTCHAT = 2, WITHCHAT = 4;
 
-	public static final int PACKET_SIZE = 576;
-	private static final int ADRESS_PORT = 0, INDEX_PORT = 1;
+    static class ConsoleInputReadTask implements Callable<String> {
 
-	static class ConsoleInputReadTask implements Callable<String> {
+        @Override
+        @SuppressWarnings("SleepWhileInLoop")
+        public String call() throws IOException {
+            BufferedReader br = new BufferedReader(
+                    new InputStreamReader(System.in));
+            String input;
+            do {
 
-		@Override
-		@SuppressWarnings("SleepWhileInLoop")
-		public String call() throws IOException {
-			BufferedReader br = new BufferedReader(
-					new InputStreamReader(System.in));
-			String input;
-			do {
+                try {
+                    while (!br.ready()) {
+                        Thread.sleep(200);
+                    }
+                    input = br.readLine();
+                } catch (InterruptedException e) {
+                    System.out.println("ConsoleInputReadTask() cancelled");
+                    return null;
+                }
+            } while ("".equals(input));
+            return input;
+        }
 
-				try {
-					while (!br.ready()) {
-						Thread.sleep(200);
-					}
-					input = br.readLine();
-				} catch (InterruptedException e) {
-					System.out.println("ConsoleInputReadTask() cancelled");
-					return null;
-				}
-			} while ("".equals(input));
-			return input;
-		}
+        public void close() {
 
-		public void close() {
+        }
+    }
 
-		}
-	}
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) {
+        Socket tcp;
+        if (args.length != 2 && args.length != 4) {
+            System.err.println("Usage : java Client ip_server port_tcp [ip_client port_upd]");
+        }
+        try {
+            InetAddress ia = InetAddress.getByName(args[IP_GESTIONNAIRE]);
+            int port = Integer.parseInt(args[PORT_GESTIONNAIRE]);
 
-	/**
-	 * @param args the command line arguments
-	 */
-	public static void main(String[] args) {
-		Socket tcp;
-		if (args.length < 2 || args.length > 3) {
-			System.err.println("Usage : java Client ip port_tcp [port_upd]");
-		}
-		try {
-			InetAddress ia = InetAddress.getByName(args[ADRESS_PORT]);
-			int port = Integer.parseInt(args[INDEX_PORT]);
+            switch (args.length) {
+                case 2:
+                    tcp = new Socket(ia, port);
 
-			switch (args.length) {
-			case 2:
-				tcp = new Socket(ia, port);
+                    new Thread(new Ecrivain(tcp)).start();
+                    new Thread(new EcouteurTCP(tcp)).start();
 
-				new Thread(new Ecrivain(tcp)).start();
-				new Thread(new EcouteurTCP(tcp)).start();
+                    break;
+                case 4:
+                    InetAddress iaUs = InetAddress.getByName(args[IP_CLIENT]);
+                    int portUs = Integer.parseInt(args[PORT_CLIENT]);
+                    tcp = new Socket(ia, port);
+                    DatagramSocket udp = new DatagramSocket(portUs, iaUs);
 
-				break;
-			case 3:
-				tcp = new Socket(ia, port);
-				DatagramSocket udp = new DatagramSocket(port, ia);
+                    new Thread(new Ecrivain(tcp)).start();
+                    new Thread(new EcouteurTCP(tcp)).start();
+                    new Thread(new EcouteurUDP(udp)).start();
+                    break;
+            }
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
-				new Thread(new Ecrivain(tcp, udp)).start();
-				new Thread(new EcouteurTCP(tcp)).start();
-				new Thread(new EcouteurUDP(udp)).start();
-				break;
-			}
-		} catch (UnknownHostException ex) {
-			Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-		} catch (IOException ex) {
-			Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-		}
+    }
 
-	}
+    static class Ecrivain implements Runnable {
 
-	static class Ecrivain implements Runnable {
+        private final Socket sockettcp;
 
-		private final Socket sockettcp;
-		private final DatagramSocket socketudp;
+        private static final String ESP = " ";
 
-		private static final String ESP = " ";
+        public Ecrivain(Socket socket) {
+            this.sockettcp = socket;
+        }
 
-		public Ecrivain(Socket socket) {
-			this.sockettcp = socket;
-			this.socketudp = null;
-		}
+        private void parse(String content) throws IOException {
+            MessageType message;
+            String[] input = content.split("\\s+");
+            int i = 0;
+            try {
+                message = MessageType.valueOf(input[i++]);
+            } catch (IllegalArgumentException ex) {
+                message = MessageType.INVALID;
+            }
+            switch (message) {
+                case CALL_OPEN:
+                case CALL:
+                case CALL_CLOSE:
+                    InetAddress iaddr = InetAddress.getByName(input[i++]);
+                    int port = Integer.parseInt(input[i++]);
+                    DatagramSocket dtDock = new DatagramSocket(port, iaddr);
+                    byte buf[] = content.getBytes();
+                    DatagramPacket packet
+                            = new DatagramPacket(buf, buf.length,
+                                    dtDock.getInetAddress(),
+                                    dtDock.getPort());
+                    dtDock.send(packet);
+                    break;
+                case INVALID:
+                    System.out.println(MessageType.MSG_INVALID);
+                    break;
+                default:
+                    writetcp(content);
+                    break;
+            }
 
-		public Ecrivain(Socket tcp, DatagramSocket upd) {
-			this.sockettcp = tcp;
-			this.socketudp = upd;
-		}
+        }
 
-		private void parse(String content) throws IOException {
-			MessageType message;
-			String[] input = content.split("\\s+");
-			int i = 0;
-			try {
-				message = MessageType.valueOf(input[i++]);
-			} catch (IllegalArgumentException ex) {
-				message = MessageType.INVALID;
-			}
-			if (this.socketudp != null && !this.socketudp.isClosed()) {
-				switch (message) {
-				case CALL_OPEN:
-				case CALL:
-				case CALL_CLOSE:
-					byte buf[] = content.getBytes();
-					DatagramPacket packet
-					= new DatagramPacket(buf, buf.length,
-							this.socketudp.getInetAddress(),
-							this.socketudp.getPort());
-					this.socketudp.send(packet);
-					break;
-				case INVALID:
-					System.out.println(MessageType.MSG_INVALID);
-					break;
-				default:
-					writetcp(content);
-					break;
-				}
-			} else {
-				writetcp(content);
-			}
+        private void writetcp(String content) throws IOException {
+            if (!this.sockettcp.isClosed()) {
+                BufferedWriter output = new BufferedWriter(new OutputStreamWriter(this.sockettcp.getOutputStream()));
+                output.write(content);
+                output.newLine();
+                output.flush();
+            }
+        }
 
-		}
+        @Override
+        public void run() {
+            ConsoleInputReadTask console = new ConsoleInputReadTask();
+            while (true) {
+                try {
+                    String content = console.call();
 
-		private void writetcp(String content) throws IOException {
-			MessageType message;
-			String[] input = content.split("\\s+");
-			int i = 0;
-			try {
-				message = MessageType.valueOf(input[i++]);
-			} catch (IllegalArgumentException ex) {
-				message = MessageType.INVALID;
-			}
-			switch (message) {
-			case NEW:
-				if(Integer.parseInt(input[i+4]) == this.socketudp.getLocalPort()) {
-					System.out.println("OK");
-				} else {
-					System.out.println("NON");
-				}
-				break;
-			default:
-				break;
-			}
-			if (!this.sockettcp.isClosed()) {
-				BufferedWriter output = new BufferedWriter(new OutputStreamWriter(this.sockettcp.getOutputStream()));
-				output.write(content);
-				output.newLine();
-				output.flush();
-			}
-			}
+                    while (!content.contains(MessageType.END.getMessage())) {
+                        content += " " + console.call();
+                    }
 
-			@Override
-			public void run() {
-				ConsoleInputReadTask console = new ConsoleInputReadTask();
-				while (true) {
-					try {
-						String content = console.call();
+                    //content = content.replace(MessageType.END.getMessage(), ESP);
+                    parse(content);
 
-						while (!content.contains(MessageType.END.getMessage())) {
-							content += " " + console.call();
-						}
+                    if (this.sockettcp.isClosed()) {
+                        break;
+                    }
+                } catch (IOException ex) {
+                    Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
+    }
 
-						//content = content.replace(MessageType.END.getMessage(), ESP);
+    static class EcouteurTCP implements Runnable {
 
-						parse(content);
+        private final Socket socket;
 
-						if (this.socketudp != null) {
-							if (this.sockettcp.isClosed() && this.socketudp.isClosed()) {
-								break;
-							}
-						} else {
-							if (this.sockettcp.isClosed()) {
-								break;
-							}
-						}
-					} catch (IOException ex) {
-						Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
-					}
-				}
-			}
-		}
+        public EcouteurTCP(Socket socket) {
+            this.socket = socket;
+        }
 
-		static class EcouteurTCP implements Runnable {
+        @Override
+        public void run() {
+            try {
+                BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                String line;
 
-			private final Socket socket;
+                while ((line = br.readLine()) != null) {
+                    System.out.println(line);
+                    if (line.startsWith(MessageType.MSG_QUIT)) {
+                        this.socket.close();
+                        break;
+                    }
+                }
 
-			public EcouteurTCP(Socket socket) {
-				this.socket = socket;
-			}
+            } catch (IOException ex) {
+                Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
 
-			@Override
-			public void run() {
-				try {
-					BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-					String line;
+    static class EcouteurUDP implements Runnable {
 
-					while ((line = br.readLine()) != null) {
-						System.out.println(line);
-						if (line.startsWith(MessageType.MSG_QUIT)) {
-							this.socket.close();
-							break;
-						}
-					}
+        private final DatagramSocket socketudp;
 
-				} catch (IOException ex) {
-					Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
-				}
-			}
-		}
+        public EcouteurUDP(DatagramSocket udp) {
+            this.socketudp = udp;
+        }
 
-		static class EcouteurUDP implements Runnable {
+        @Override
+        public void run() {
+            try {
+                while (true) {
+                    byte[] buffer = new byte[PACKET_SIZE];
+                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
-			private final DatagramSocket socketudp;
+                    socketudp.receive(packet);
 
-			public EcouteurUDP(DatagramSocket udp) {
-				this.socketudp = udp;
-			}
+                    String str = new String(packet.getData());
 
-			@Override
-			public void run() {
+                    System.out.println(str);
+                    packet.setLength(buffer.length);
+                }
+            } catch (IOException ex) {
+                Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
 
-				// Create a byte buffer/array for the receive Datagram packet
-				byte[] receiveData = new byte[PACKET_SIZE];
+    static class MessagesClient {
 
-				// Set up a DatagramPacket to receive the data into
-				DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-				System.out.println("I am in the reader!");
-				try {
-					// Receive a packet from the server (blocks until the packets are received)
-					socketudp.receive(receivePacket);
-					System.out.println("Am i receiving?");
-					// Extract the reply from the DatagramPacket      
-					String serverReply = new String(receivePacket.getData(), 0, receivePacket.getLength());
+        public static void joinThread(Thread t) throws InterruptedException {
+            t.start();
+            t.join();
+        }
+    }
 
-					// print to the screen
-					System.out.println("UDPClient: Response from Server: \"" + serverReply + "\"\n");
-
-				} catch (IOException ex) {
-					Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
-				}
-			}
-		}
-
-	}
+}
