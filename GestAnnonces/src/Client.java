@@ -126,9 +126,6 @@ public class Client {
                     writetcp(content, socket);
                     
                     break;
-                case INVALID:
-                    System.out.println(MessageType.MSG_INVALID);
-                    break;
                 default:
                     writetcp(content, this.sockettcp);
                     break;
