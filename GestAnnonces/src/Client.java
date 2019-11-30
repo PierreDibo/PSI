@@ -64,6 +64,7 @@ public class Client {
         Socket tcp;
         if (args.length != 2 && args.length != 4) {
             System.err.println("Usage : java Client ip_gestionnaire port_gestionnaire [ip_client port_client]");
+            System.exit(-1);
         }
         try {
             InetAddress ia = InetAddress.getByName(args[IP_GESTIONNAIRE]);
