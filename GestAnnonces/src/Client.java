@@ -4,14 +4,9 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketAddress;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
@@ -27,7 +22,6 @@ public class Client {
     public static final int ATTENTE = 100;
     public static final int PACKET_SIZE = 576;
     private static final int IP_GESTIONNAIRE = 0, PORT_GESTIONNAIRE = 1, IP_CLIENT = 2, PORT_CLIENT = 3;
-    private static int WITHOUTCHAT = 2, WITHCHAT = 4;
 
     static class ConsoleInputReadTask implements Callable<String> {
 
@@ -99,8 +93,6 @@ public class Client {
     static class Ecrivain implements Runnable {
 
         private final Socket sockettcp;
-
-        private static final String ESP = " ";
 
         public Ecrivain(Socket socket) {
             this.sockettcp = socket;

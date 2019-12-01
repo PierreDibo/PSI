@@ -1,60 +1,120 @@
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.nio.file.Paths;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.util.Arrays;
+import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
- * @author dibop
+ * @author Pierre Dibo
+ * @author Aillerie Anthony
  */
 public class SSL {
 
-    private static final int PROTOCOL_TSL = 0, IP_GESTIONNAIRE = 1, PORT_GESTIONNAIRE = 2, IP_CLIENT = 3, PORT_CLIENT = 4;
+    private static final String HOST = "localhost";
+    private static final int PROTOCOL_TSL = 0, IP_GESTIONNAIRE = 1, PORT_GESTIONNAIRE = 2, PORT_CLIENT = 3;
+    private static final Object LOCK = new Object();
+    private static String protocole = null;
+
+    static class ConsoleInputReadTask implements Callable<String> {
+
+        @Override
+        @SuppressWarnings("SleepWhileInLoop")
+        public String call() throws IOException {
+            BufferedReader br = new BufferedReader(
+                    new InputStreamReader(System.in));
+            String input;
+            do {
+
+                try {
+                    while (!br.ready()) {
+                        Thread.sleep(200);
+                    }
+                    input = br.readLine();
+                } catch (InterruptedException e) {
+                    System.out.println("ConsoleInputReadTask() cancelled");
+                    return null;
+                }
+            } while ("".equals(input));
+            return input;
+        }
+
+        public void close() {
+
+        }
+    }
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        Socket tcp;
-        SSLClient client;
-        InetAddress addrGest, addrClient;
-        String protocol;
-        int portGest, portClient;
-        if (args.length != 2 && args.length != 4) {
+        /*try {
+            SSLClient client = new SSLClient("TLSv1.2", InetAddress.getByName("localhost"), 9222);
+            Client.ConsoleInputReadTask console = new Client.ConsoleInputReadTask();
+            if (client.connect()) {
+                while (true) {
+                    try {
+                        String content = console.call();
+
+                        while (!content.contains(MessageType.END.getMessage())) {
+                            content += " " + console.call();
+                        }
+
+                        //content = content.replace(MessageType.END.getMessage(), ESP);
+                        client.write(content);
+                        client.read();
+                        if (content.contains("QUIT")) {
+                            break;
+                        }
+
+                    } catch (IOException ex) {
+                        Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+                client.shutdown();        
+            }*/
+        //synchronized()
+        //Demo.LOCK.notifyAll();
+        SSLClientServer serverRunnable = null;
+
+        if (args.length < 2 && args.length > 4) {
             System.err.println("Usage : java Client [protocole] ip_gestionnaire port_gestionnaire [port_client]");
             System.exit(-1);
         }
 
         try {
-            protocol = args[PROTOCOL_TSL];
-
-            addrClient = InetAddress.getByName(args[IP_CLIENT]);
-            portClient = Integer.parseInt(args[PORT_CLIENT]);
-            client = new SSLClient(protocol, addrClient, portClient);
             switch (args.length) {
                 case 2:
-                    addrGest = InetAddress.getByName(args[IP_GESTIONNAIRE]);
-                    portGest = Integer.parseInt(args[PORT_GESTIONNAIRE]);
-                    tcp = new Socket(addrGest, portGest);
-
-                    new Thread(new Ecrivain(tcp)).start();
-                    new Thread(new Ecouteur(tcp)).start();
-
+                    connectGestionnaire(args);
                     break;
                 case 3:
+                    connectGestionnaire(args);
+                    new Thread(new Server(Integer.parseInt(args[PORT_CLIENT]))).start();
+                    break;
+                case 4:
+                    connectGestionnaire(args);
+                    serverRunnable = new SSLClientServer(protocole = args[PROTOCOL_TSL], InetAddress.getByName(HOST), Integer.parseInt(args[PORT_CLIENT]));
+                    Thread server = new Thread(serverRunnable);
+                    server.start();
+
+                    synchronized (LOCK) {
+                        LOCK.wait();
+                        serverRunnable.stop();
+                    }
                     break;
             }
 
@@ -62,16 +122,30 @@ public class SSL {
             Logger.getLogger(SSL.class.getName()).log(Level.SEVERE, null, ex);
         } catch (NoSuchAlgorithmException | KeyStoreException
                 | CertificateException | UnrecoverableKeyException
-                | KeyManagementException | IOException ex) {
+                | KeyManagementException | IOException | InterruptedException ex) {
             Logger.getLogger(SSL.class.getName()).log(Level.SEVERE, null, ex);
         }
+        if (serverRunnable != null) {
+            serverRunnable.stop();
+        }
+    }
+
+    private static void connectGestionnaire(String[] args) throws UnknownHostException, IOException {
+        Socket socket;
+        InetAddress addrGest;
+        int portGest;
+
+        addrGest = InetAddress.getByName(args[IP_GESTIONNAIRE]);
+        portGest = Integer.parseInt(args[PORT_GESTIONNAIRE]);
+        socket = new Socket(addrGest, portGest);
+
+        new Thread(new Ecrivain(socket)).start();
+        new Thread(new Ecouteur(socket)).start();
     }
 
     static class Ecrivain implements Runnable {
 
         private final Socket sockettcp;
-
-        private static final String ESP = " ";
 
         public Ecrivain(Socket socket) {
             this.sockettcp = socket;
@@ -90,12 +164,26 @@ public class SSL {
                 case CALL_OPEN:
                 case CALL:
                 case CALL_CLOSE:
-                    InetAddress iaddr = InetAddress.getByName(input[i++]);
-                    int port = Integer.parseInt(input[i++]);
-                    //System.out.println(iaddr.toString());
-                    //DatagramSocket dtDock = new DatagramSocket(port, iaddr);
-                    Socket socket = new Socket(iaddr, port);
-                    writetcp(content, socket);
+                    if (protocole == null) {
+                        InetAddress iaddr = InetAddress.getByName(input[i++]);
+                        int port = Integer.parseInt(input[i++]);
+                        //System.out.println(iaddr.toString());
+                        //DatagramSocket dtDock = new DatagramSocket(port, iaddr);
+                        Socket socket = new Socket(iaddr, port);
+                        writetcp(content, socket);
+                    } else {
+                        InetAddress iaddr = InetAddress.getByName(input[i++]);
+                        int port = Integer.parseInt(input[i++]);
+                        try {
+                            SSLClient client = new SSLClient(protocole, iaddr, port);
+                            if (client.connect()) {
+                                client.write(String.join(" ", Arrays.copyOfRange(input, i, input.length)));
+                                client.shutdown();
+                            }
+                        } catch (NoSuchAlgorithmException | KeyStoreException | FileNotFoundException | CertificateException | UnrecoverableKeyException | KeyManagementException ex) {
+                            Logger.getLogger(SSL.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
                     break;
                 default:
                     writetcp(content, this.sockettcp);
@@ -161,6 +249,62 @@ public class SSL {
 
             } catch (IOException ex) {
                 Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+
+    static class Server implements Runnable {
+
+        private final int port;
+
+        public Server(int p) {
+            this.port = p;
+        }
+
+        @Override
+        public void run() {
+            try (final ServerSocket server = new ServerSocket(port)) {
+                while (true) {
+                    Socket clientSocket = server.accept();
+                    System.out.println(clientSocket);
+                    new Thread(new EcouteurClient(clientSocket)).start();
+                }
+            } catch (UnknownHostException ex) {
+                Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (IOException ex) {
+                Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+
+    static class MessagesClient {
+
+        public static void joinThread(Thread t) throws InterruptedException {
+            t.start();
+            t.join();
+        }
+    }
+
+    private static class EcouteurClient implements Runnable {
+
+        private final Socket socket;
+
+        public EcouteurClient(Socket clientSocket) {
+            this.socket = clientSocket;
+        }
+
+        @Override
+        public void run() {
+            while (this.socket.isConnected()) {
+                try {
+                    BufferedReader input = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
+                    String msg;
+                    while ((msg = input.readLine()) != null) {
+                        System.out.println(msg);
+                    }
+                } catch (IOException ex) {
+                    Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         }
     }

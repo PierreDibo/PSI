@@ -19,8 +19,8 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
 
 /**
- *
- * @author dibop
+ * @author Pierre Dibo
+ * @author Aillerie Anthony
  */
 public class SSLClient extends SSLPeer {
 
@@ -159,4 +159,5 @@ public class SSLClient extends SSLPeer {
         closeConnection(this.socketChannel, this.engine);
         this.executor.shutdown();
     }
+
 }

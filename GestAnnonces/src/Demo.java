@@ -6,7 +6,6 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -16,27 +15,33 @@ import java.util.logging.Logger;
  */
 public class Demo {
 
+    private static final Object LOCK = new Object();
+
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        String s = "Très belle moto-moto 300 de belle chose";
-        
-        System.out.println(Arrays.toString(s.trim().split("-")));
-        /*try {
+        try {
             SSLClientServer serverRunnable = (new SSLClientServer("TLSv1.2", InetAddress.getByName("localhost"), 9222));
             Thread server = new Thread(serverRunnable);
             server.start();
-            Thread.sleep(1000);
+
+            synchronized (LOCK) {
+                LOCK.wait();
+                serverRunnable.stop();
+            }
+
+            /* Thread.sleep(1000);
             SSLClient client = new SSLClient("TLSv1.2", InetAddress.getByName("localhost"), 9222);
             client.connect();
             client.write("Hello! I am a client!");
             client.read();
-            client.shutdown();
-            serverRunnable.stop();
+            client.shutdown();*/
+            //serverRunnable.stop();
         } catch (NoSuchAlgorithmException | KeyStoreException | IOException | CertificateException | UnrecoverableKeyException | KeyManagementException | InterruptedException ex) {
             Logger.getLogger(Demo.class.getName()).log(Level.SEVERE, null, ex);
-        }*/
+
+        }
     }
 
 }

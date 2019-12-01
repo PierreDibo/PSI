@@ -21,6 +21,10 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
+/**
+ * @author Pierre Dibo
+ * @author Aillerie Anthony
+ */
 public abstract class SSLPeer {
 
     public static final String KEYSTORE_INSTANCE = "JKS",
@@ -167,10 +171,9 @@ public abstract class SSLPeer {
     }
 
     protected void closeConnection(SocketChannel socketChannel, SSLEngine engine) throws IOException {
-        try (socketChannel) {
-            engine.closeOutbound();
-            doHandshake(socketChannel, engine);
-        }
+        engine.closeOutbound();
+        doHandshake(socketChannel, engine);
+        socketChannel.close();
     }
 
     protected void handleEndOfStream(SocketChannel socketChannel, SSLEngine engine) throws SSLException, IOException {

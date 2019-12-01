@@ -26,8 +26,8 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
 
 /**
- *
- * @author dibop
+ * @author Pierre Dibo
+ * @author Aillerie Anthony
  */
 public class SSLClientServer extends SSLPeer implements Runnable {
 
@@ -131,6 +131,7 @@ public class SSLClientServer extends SSLPeer implements Runnable {
                 switch (result.getStatus()) {
                     case OK:
                         this.peerAppData.flip();
+                        System.out.println(socketChannel.socket().getInetAddress() + "::" + socketChannel.socket().getLocalPort());
                         System.out.println(StandardCharsets.UTF_8.decode(this.peerAppData).toString());
                         break;
                     case BUFFER_OVERFLOW:
@@ -146,7 +147,7 @@ public class SSLClientServer extends SSLPeer implements Runnable {
                         throw new IllegalStateException("Invalid SSL status: " + result.getStatus());
                 }
             }
-            write(socketChannel, engine, "Hello! I am your server!");
+            //write(socketChannel, engine, "Hello! I am your server!");
         } else if (bytesRead < 0) {
             handleEndOfStream(socketChannel, engine);
         }
