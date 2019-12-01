@@ -2,3 +2,5 @@
 .vscode/launch.json
 /bin/
 /GestAnnonces/build/
+*.jks
+*.cer

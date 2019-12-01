@@ -230,7 +230,7 @@ public class Client {
 
     private static class EcouteurClient implements Runnable {
 
-        private Socket socket;
+        private final Socket socket;
 
         public EcouteurClient(Socket clientSocket) {
             this.socket = clientSocket;
