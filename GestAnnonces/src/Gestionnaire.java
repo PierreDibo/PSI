@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -139,16 +140,15 @@ public class Gestionnaire {
             return ANNONCES.keySet().stream().anyMatch((u) -> (u.getPseudo().equals(pseudo)));
         }
 
-        public boolean addUtilisateur(String pseudo, String mdp, String ipClient, String portUdp) {
+        public boolean addUtilisateur(String pseudo, String mdp) {
             if (currentUser != null || existsPseudo(pseudo)) {
                 return false;
             }
-            this.currentUser = new Utilisateur(pseudo, mdp, this.socket, ipClient, Integer.parseInt(portUdp));
-            ANNONCES.put(this.currentUser, new HashSet<>());
+            ANNONCES.put(new Utilisateur(pseudo, mdp, this.socket), new HashSet<>());
             return true;
         }
 
-        public boolean connectUtilisateur(String pseudo, String mdp) {
+        public boolean connectUtilisateur(String pseudo, String mdp, int port) {
             if (!existsPseudo(pseudo)) {
                 return false;
             }
@@ -157,6 +157,7 @@ public class Gestionnaire {
                     .filter((u) -> (u.getPseudo().equals(pseudo)) && (u.getMotDePasse().equals(mdp)))
                     .findFirst().orElse(this.currentUser);
 
+            currentUser.setPort(port);
             return this.currentUser != null;
         }
 
@@ -236,7 +237,7 @@ public class Gestionnaire {
             switch (messageType) {
                 case NEW:
                     if (msg.length == messageType.getParameters()) {
-                        if (addUtilisateur(msg[i++], msg[i++], msg[i++], msg[i++])) {
+                        if (addUtilisateur(msg[i++], msg[i++])) {
                             MessagesGestionnaire.addUtilisateurSuccess(socket);
                         } else {
                             MessagesGestionnaire.addUtilisateurError(socket);
@@ -247,7 +248,7 @@ public class Gestionnaire {
                     break;
                 case CONNECT:
                     if (msg.length == messageType.getParameters()) {
-                        if (connectUtilisateur(msg[i++], msg[i++])) {
+                        if (connectUtilisateur(msg[i++], msg[i++], Integer.parseInt(msg[i++]))) {
                             MessagesGestionnaire.connectUtilisateurSuccess(socket);
                         } else {
                             MessagesGestionnaire.connectUtilisateurError(socket);
@@ -357,9 +358,7 @@ public class Gestionnaire {
                         if (u == null) {
                             MessagesGestionnaire.existsUtilisateurFailure(socket);
                         } else {
-                            MessagesGestionnaire.existsUtilisateurSuccess(socket,
-                                    u.getIp(),
-                                    u.getPort());
+                            MessagesGestionnaire.existsUtilisateurSuccess(socket, u.getPort());
                         }
                     } else {
                         MessagesGestionnaire.invalid(socket);
@@ -502,9 +501,10 @@ public class Gestionnaire {
         }
         // </editor-fold>
 
-        private static void existsUtilisateurSuccess(Socket s, String ip, int port) throws InterruptedException {
+        private static void existsUtilisateurSuccess(Socket s, int port) throws InterruptedException {
             joinThread(new Thread(new Ecrivain(s, MessageType.MSG_WHOIS_SUCCESS)));
-            joinThread(new Thread(new Ecrivain(s, ip + ":" + port)));
+            InetSocketAddress inetSocketAddress = (InetSocketAddress) s.getRemoteSocketAddress();
+            joinThread(new Thread(new Ecrivain(s, inetSocketAddress.getAddress() + ":" + port)));
         }
 
         private static void existsUtilisateurFailure(Socket s) throws InterruptedException {

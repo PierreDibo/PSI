@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -74,8 +75,12 @@ public class SSL {
                     connectGestionnaire(args);
                     break;
                 case 5:
-                    connectGestionnaire(args);
-                    serverRunnable = new SSLClientServer(protocole = args[PROTOCOL_TSL], InetAddress.getByName(args[IP_CLIENT]), Integer.parseInt(args[PORT_CLIENT]));
+                    Socket socket = connectGestionnaire(args);
+                    InetSocketAddress inetSocketAddress = (InetSocketAddress) socket.getRemoteSocketAddress();
+                    InetAddress inetAddress = inetSocketAddress.getAddress();
+                    System.out.println("REMOTE SOCKET ADDR : " + inetSocketAddress);
+                    System.out.println("REMOTE SOCKET ADDR : " + inetAddress + " " + inetSocketAddress.getPort());
+                    serverRunnable = new SSLClientServer(protocole = args[PROTOCOL_TSL], inetSocketAddress.getAddress(), Integer.parseInt(args[PORT_CLIENT]));
                     Thread server = new Thread(serverRunnable);
                     server.start();
 
@@ -98,7 +103,7 @@ public class SSL {
         }
     }
 
-    private static void connectGestionnaire(String[] args) throws UnknownHostException, IOException {
+    private static Socket connectGestionnaire(String[] args) throws UnknownHostException, IOException {
         Socket socket;
         InetAddress addrGest;
         int portGest;
@@ -109,6 +114,7 @@ public class SSL {
         
         new Thread(new Ecrivain(socket)).start();
         new Thread(new Ecouteur(socket)).start();
+        return socket;
     }
 
     static class Ecrivain implements Runnable {

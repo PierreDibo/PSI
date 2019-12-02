@@ -131,7 +131,6 @@ public class SSLClientServer extends SSLPeer implements Runnable {
                 switch (result.getStatus()) {
                     case OK:
                         this.peerAppData.flip();
-                        System.out.println(socketChannel.socket().getInetAddress() + "::" + socketChannel.socket().getLocalPort());
                         System.out.println(StandardCharsets.UTF_8.decode(this.peerAppData).toString());
                         break;
                     case BUFFER_OVERFLOW:

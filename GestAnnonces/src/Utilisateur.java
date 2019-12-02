@@ -13,24 +13,21 @@ public class Utilisateur {
     private String pseudo;
     private String motDePasse;
     private final Socket socket;
-    private final String ip;
-    private final int port;
+    private int port;
 
     public Utilisateur(String pseudo, String motDePasse, Socket socket) {
         this.identifiant = compteur++;
         this.pseudo = pseudo;
         this.motDePasse = motDePasse;
         this.socket = socket;
-        this.ip = null;
         this.port = 0;
     }
 
-    public Utilisateur(String pseudo, String motDePasse, Socket socket, String ip, int p) {
+    public Utilisateur(String pseudo, String motDePasse, Socket socket, int p) {
         this.identifiant = compteur++;
         this.pseudo = pseudo;
         this.motDePasse = motDePasse;
         this.socket = socket;
-        this.ip = ip;
         this.port = p;
     }
 
@@ -39,7 +36,6 @@ public class Utilisateur {
         this.pseudo = pseudo;
         this.motDePasse = motDePasse;
         this.socket = socket;
-        this.ip = null;
         this.port = 0;
     }
 
@@ -48,7 +44,6 @@ public class Utilisateur {
         this.pseudo = null;
         this.motDePasse = null;
         this.socket = null;
-        this.ip = null;
         this.port = 0;
     }
 
@@ -76,12 +71,12 @@ public class Utilisateur {
         this.motDePasse = motDePasse;
     }
 
-    public String getIp() {
-        return this.ip;
-    }
-
     public int getPort() {
         return this.port;
+    }
+    
+    public void setPort(int port) {
+    	this.port = port;
     }
 
     @Override
