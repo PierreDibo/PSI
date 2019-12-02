@@ -25,8 +25,7 @@ import java.util.logging.Logger;
  */
 public class SSL {
 
-    private static final String HOST = "localhost";
-    private static final int PROTOCOL_TSL = 0, IP_GESTIONNAIRE = 1, PORT_GESTIONNAIRE = 2, PORT_CLIENT = 3;
+    private static final int PROTOCOL_TSL = 0, IP_GESTIONNAIRE = 1, PORT_GESTIONNAIRE = 2, IP_CLIENT = 3, PORT_CLIENT = 4;
     private static final Object LOCK = new Object();
     private static String protocole = null;
 
@@ -62,37 +61,10 @@ public class SSL {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        /*try {
-            SSLClient client = new SSLClient("TLSv1.2", InetAddress.getByName("localhost"), 9222);
-            Client.ConsoleInputReadTask console = new Client.ConsoleInputReadTask();
-            if (client.connect()) {
-                while (true) {
-                    try {
-                        String content = console.call();
-
-                        while (!content.contains(MessageType.END.getMessage())) {
-                            content += " " + console.call();
-                        }
-
-                        //content = content.replace(MessageType.END.getMessage(), ESP);
-                        client.write(content);
-                        client.read();
-                        if (content.contains("QUIT")) {
-                            break;
-                        }
-
-                    } catch (IOException ex) {
-                        Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-                client.shutdown();        
-            }*/
-        //synchronized()
-        //Demo.LOCK.notifyAll();
         SSLClientServer serverRunnable = null;
 
-        if (args.length < 2 && args.length > 4) {
-            System.err.println("Usage : java Client [protocole] ip_gestionnaire port_gestionnaire [port_client]");
+        if (args.length < 2 && args.length > 5) {
+            System.err.println("Usage : java SSL [TLSv1.2] ip_gestionnaire port_gestionnaire [ip_client port_client]");
             System.exit(-1);
         }
 
@@ -101,13 +73,9 @@ public class SSL {
                 case 2:
                     connectGestionnaire(args);
                     break;
-                case 3:
+                case 5:
                     connectGestionnaire(args);
-                    new Thread(new Server(Integer.parseInt(args[PORT_CLIENT]))).start();
-                    break;
-                case 4:
-                    connectGestionnaire(args);
-                    serverRunnable = new SSLClientServer(protocole = args[PROTOCOL_TSL], InetAddress.getByName(HOST), Integer.parseInt(args[PORT_CLIENT]));
+                    serverRunnable = new SSLClientServer(protocole = args[PROTOCOL_TSL], InetAddress.getByName(args[IP_CLIENT]), Integer.parseInt(args[PORT_CLIENT]));
                     Thread server = new Thread(serverRunnable);
                     server.start();
 
@@ -138,7 +106,7 @@ public class SSL {
         addrGest = InetAddress.getByName(args[IP_GESTIONNAIRE]);
         portGest = Integer.parseInt(args[PORT_GESTIONNAIRE]);
         socket = new Socket(addrGest, portGest);
-
+        
         new Thread(new Ecrivain(socket)).start();
         new Thread(new Ecouteur(socket)).start();
     }
@@ -167,8 +135,6 @@ public class SSL {
                     if (protocole == null) {
                         InetAddress iaddr = InetAddress.getByName(input[i++]);
                         int port = Integer.parseInt(input[i++]);
-                        //System.out.println(iaddr.toString());
-                        //DatagramSocket dtDock = new DatagramSocket(port, iaddr);
                         Socket socket = new Socket(iaddr, port);
                         writetcp(content, socket);
                     } else {
@@ -212,7 +178,6 @@ public class SSL {
                         content += " " + console.call();
                     }
 
-                    //content = content.replace(MessageType.END.getMessage(), ESP);
                     parse(content);
 
                     if (this.sockettcp.isClosed()) {
@@ -308,5 +273,4 @@ public class SSL {
             }
         }
     }
-
 }

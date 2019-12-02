@@ -147,7 +147,6 @@ public class SSLClientServer extends SSLPeer implements Runnable {
                         throw new IllegalStateException("Invalid SSL status: " + result.getStatus());
                 }
             }
-            //write(socketChannel, engine, "Hello! I am your server!");
         } else if (bytesRead < 0) {
             handleEndOfStream(socketChannel, engine);
         }
