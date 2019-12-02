@@ -203,7 +203,7 @@ public class SSL {
 
         @Override
         public void run() {
-            Client.ConsoleInputReadTask console = new Client.ConsoleInputReadTask();
+            ConsoleInputReadTask console = new ConsoleInputReadTask();
             while (true) {
                 try {
                     String content = console.call();
@@ -303,7 +303,7 @@ public class SSL {
                         System.out.println(msg);
                     }
                 } catch (IOException ex) {
-                    Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(SSL.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         }

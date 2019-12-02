@@ -57,7 +57,8 @@ public class SSLClientServer extends SSLPeer implements Runnable {
             IOException, FileNotFoundException, CertificateException,
             UnrecoverableKeyException, KeyManagementException {
         this.context = SSLContext.getInstance(protocol);
-        this.context.init(createKeyManagers(FILE_SERVER, STOREPASS, KEYPASS), createTrustManagers(FILE_TRUSTED, STOREPASS), new SecureRandom());
+        this.context.init(createKeyManagers(FILE_SERVER, STOREPASS, KEYPASS), 
+                createTrustManagers(FILE_TRUSTED, STOREPASS), new SecureRandom());
 
         SSLSession dummySession = context.createSSLEngine().getSession();
         this.myAppData = ByteBuffer.allocate(dummySession.getApplicationBufferSize());
