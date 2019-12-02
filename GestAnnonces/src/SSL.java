@@ -26,7 +26,7 @@ import java.util.logging.Logger;
  */
 public class SSL {
 
-    private static final int PROTOCOL_TSL = 0, IP_GESTIONNAIRE = 1, PORT_GESTIONNAIRE = 2, IP_CLIENT = 3, PORT_CLIENT = 4;
+    private static final int PROTOCOL_TSL = 0, IP_GESTIONNAIRE = 0, PORT_GESTIONNAIRE = 1, IP_CLIENT = 3, PORT_CLIENT = 4;
     private static final Object LOCK = new Object();
     private static String protocole = null;
 
@@ -62,10 +62,9 @@ public class SSL {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        SSLClientServer serverRunnable = null;
 
         if (args.length < 2 && args.length > 5) {
-            System.err.println("Usage : java SSL [TLSv1.2] ip_gestionnaire port_gestionnaire [ip_client port_client]");
+            System.err.println("Usage : java SSL ip_gestionnaire port_gestionnaire");
             System.exit(-1);
         }
 
@@ -74,32 +73,12 @@ public class SSL {
                 case 2:
                     connectGestionnaire(args);
                     break;
-                case 5:
-                    Socket socket = connectGestionnaire(args);
-                    InetSocketAddress inetSocketAddress = (InetSocketAddress) socket.getRemoteSocketAddress();
-                    InetAddress inetAddress = inetSocketAddress.getAddress();
-                    System.out.println("REMOTE SOCKET ADDR : " + inetSocketAddress);
-                    System.out.println("REMOTE SOCKET ADDR : " + inetAddress + " " + inetSocketAddress.getPort());
-                    serverRunnable = new SSLClientServer(protocole = args[PROTOCOL_TSL], inetSocketAddress.getAddress(), Integer.parseInt(args[PORT_CLIENT]));
-                    Thread server = new Thread(serverRunnable);
-                    server.start();
-
-                    synchronized (LOCK) {
-                        LOCK.wait();
-                        serverRunnable.stop();
-                    }
-                    break;
             }
 
         } catch (UnknownHostException ex) {
             Logger.getLogger(SSL.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (NoSuchAlgorithmException | KeyStoreException
-                | CertificateException | UnrecoverableKeyException
-                | KeyManagementException | IOException | InterruptedException ex) {
+        } catch (IOException ex) {
             Logger.getLogger(SSL.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        if (serverRunnable != null) {
-            serverRunnable.stop();
         }
     }
 
@@ -120,9 +99,16 @@ public class SSL {
     static class Ecrivain implements Runnable {
 
         private final Socket sockettcp;
+        private Socket socketClient;
+
+        SSLClientServer serverRunnable = null;
 
         public Ecrivain(Socket socket) {
             this.sockettcp = socket;
+        }
+        
+        public void setSocketClient(Socket socketClient) {
+        	this.socketClient = socketClient;
         }
 
         private void parse(String content) throws IOException {
@@ -134,7 +120,32 @@ public class SSL {
             } catch (IllegalArgumentException ex) {
                 message = MessageType.INVALID;
             }
+            
             switch (message) {
+	            case CONNECT:
+	            	System.out.println(socketClient);
+	            	InetAddress inetSocketAddress = socketClient.getInetAddress();
+	            	//InetAddress inetAddress = inetSocketAddress.getAddress();
+	            	System.out.println("REMOTE SOCKET ADDR : " + inetSocketAddress);
+	            	System.out.println("REMOTE SOCKET ADDR : " + inetSocketAddress + " " + socketClient.getPort());
+	            	try {
+	            		serverRunnable = new SSLClientServer("TLSv1.2", inetSocketAddress, Integer.parseInt(input[i+2]));
+	            	} catch (UnrecoverableKeyException | KeyManagementException | NoSuchAlgorithmException
+	            			| KeyStoreException | CertificateException ex) {
+	            		Logger.getLogger(SSL.class.getName()).log(Level.SEVERE, null, ex);
+	            	}
+	            	Thread server = new Thread(serverRunnable);
+	            	server.start();
+	
+	            	synchronized (LOCK) {
+	            		try {
+							LOCK.wait();
+						} catch (InterruptedException ex) {
+							Logger.getLogger(SSL.class.getName()).log(Level.SEVERE, null, ex);
+						}
+	            		serverRunnable.stop();
+	            	}
+	            	break;
                 case CALL_OPEN:
                 case CALL:
                 case CALL_CLOSE:
@@ -161,7 +172,9 @@ public class SSL {
                     writetcp(content, this.sockettcp);
                     break;
             }
-
+            if (serverRunnable != null) {
+                serverRunnable.stop();
+            }
         }
 
         private void writetcp(String content, Socket socket) throws IOException {
@@ -256,12 +269,14 @@ public class SSL {
         }
     }
 
-    private static class EcouteurClient implements Runnable {
+    static class EcouteurClient implements Runnable {
 
         private final Socket socket;
+        private Ecrivain ecrivain;
 
         public EcouteurClient(Socket clientSocket) {
             this.socket = clientSocket;
+            ecrivain.setSocketClient(socket);
         }
 
         @Override
@@ -277,6 +292,10 @@ public class SSL {
                     Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
+        }
+        
+        public Socket getSocket() {
+        	return socket;
         }
     }
 }
