@@ -144,7 +144,7 @@ public class Gestionnaire {
                 return false;
             }
             this.currentUser = new Utilisateur(pseudo, mdp, this.socket, ipClient, Integer.parseInt(portUdp));
-            ANNONCES.put(this.currentUser, new HashSet<>());
+            ANNONCES.put(new Utilisateur(pseudo, mdp, this.socket, ipClient, Integer.parseInt(portUdp)), new HashSet<>());
             return true;
         }
 
@@ -279,7 +279,7 @@ public class Gestionnaire {
                     }
                     break;
                 case ADD_ANNONCE:
-                    String[] m = message.split("-");
+                    String[] m = message.split("\\|\\|");
                     if (m.length != 2) {
                         MessagesGestionnaire.invalid(socket);
                     } else if (msg.length >= messageType.getParameters()) {

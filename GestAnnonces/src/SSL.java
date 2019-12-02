@@ -12,6 +12,7 @@ import java.net.UnknownHostException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
@@ -29,6 +30,7 @@ public class SSL {
     private static final int PROTOCOL_TSL = 0, IP_GESTIONNAIRE = 1, PORT_GESTIONNAIRE = 2, PORT_CLIENT = 3;
     private static final Object LOCK = new Object();
     private static String protocole = null;
+    private static final byte[] SALT = new byte[16];
 
     static class ConsoleInputReadTask implements Callable<String> {
 
@@ -62,34 +64,9 @@ public class SSL {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        /*try {
-            SSLClient client = new SSLClient("TLSv1.2", InetAddress.getByName("localhost"), 9222);
-            Client.ConsoleInputReadTask console = new Client.ConsoleInputReadTask();
-            if (client.connect()) {
-                while (true) {
-                    try {
-                        String content = console.call();
-
-                        while (!content.contains(MessageType.END.getMessage())) {
-                            content += " " + console.call();
-                        }
-
-                        //content = content.replace(MessageType.END.getMessage(), ESP);
-                        client.write(content);
-                        client.read();
-                        if (content.contains("QUIT")) {
-                            break;
-                        }
-
-                    } catch (IOException ex) {
-                        Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-                client.shutdown();        
-            }*/
-        //synchronized()
-        //Demo.LOCK.notifyAll();
         SSLClientServer serverRunnable = null;
+        SecureRandom secureRandom = new SecureRandom();
+        secureRandom.nextBytes(SALT);
 
         if (args.length < 2 && args.length > 4) {
             System.err.println("Usage : java Client [protocole] ip_gestionnaire port_gestionnaire [port_client]");
