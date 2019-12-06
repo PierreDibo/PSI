@@ -11,11 +11,11 @@ public class Utilisateur {
     private final int identifiant;
     private static int compteur = 0;
     private String pseudo;
-    private String motDePasse;
+    private char[] motDePasse;
     private final Socket socket;
     private int port;
 
-    public Utilisateur(String pseudo, String motDePasse, Socket socket) {
+    public Utilisateur(String pseudo, char[] motDePasse, Socket socket) {
         this.identifiant = compteur++;
         this.pseudo = pseudo;
         this.motDePasse = motDePasse;
@@ -23,7 +23,7 @@ public class Utilisateur {
         this.port = 0;
     }
 
-    public Utilisateur(String pseudo, String motDePasse, Socket socket, int p) {
+    public Utilisateur(String pseudo, char[] motDePasse, Socket socket, int p) {
         this.identifiant = compteur++;
         this.pseudo = pseudo;
         this.motDePasse = motDePasse;
@@ -31,7 +31,7 @@ public class Utilisateur {
         this.port = p;
     }
 
-    public Utilisateur(int id, String pseudo, String motDePasse, Socket socket) {
+    public Utilisateur(int id, String pseudo, char[] motDePasse, Socket socket) {
         this.identifiant = id;
         this.pseudo = pseudo;
         this.motDePasse = motDePasse;
@@ -55,7 +55,7 @@ public class Utilisateur {
         return pseudo;
     }
 
-    public String getMotDePasse() {
+    public char[] getMotDePasse() {
         return motDePasse;
     }
 
@@ -67,7 +67,7 @@ public class Utilisateur {
         this.pseudo = pseudo;
     }
 
-    public void setMotDePasse(String motDePasse) {
+    public void setMotDePasse(char[] motDePasse) {
         this.motDePasse = motDePasse;
     }
 

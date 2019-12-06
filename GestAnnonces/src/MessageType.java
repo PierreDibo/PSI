@@ -7,15 +7,16 @@
 public enum MessageType {
     UTILISATEUR("L'utilisateur"),
     ANNONCE("L'annonce"),
-    NEW("NEW pseudo mdp[_]***", 3),
-    CONNECT("CONNECT pseudo mdp port[_]***", 4),
-    UPDATE("UPDATE ancien_pseudo ancien_mdp nouveau_pseudo nouveau_mdp[_]***", 5),
-    DELETE("DELETE[_]***", 1),
-    ADD_ANNONCE("ADD_ANNONCE nomAnnonce domaine prix description with space[_]***", 5),
+    NEW("NEW pseudo mdp[_]***", 4),
+    CONNECT("CONNECT pseudo mdp port[_]***", 5),
+    DISCONNECT("DISCONNECT[_]***", 2),
+    UPDATE("UPDATE nouveau_pseudo nouveau_mdp nouveau_port[_]***", 5),
+    DELETE("DELETE[_]***", 2),
+    ADD_ANNONCE("ADD_ANNONCE nomAnnonce domaine prix description with space[_]***", 6),
     UPDATE_ANNONCE("UPDATE_ANNONCE id nomAnnonce domaine prix description with space[_]***", 6),
     DELETE_ANNONCE("DELETE_ANNONCE id[_]***", 2),
-    CHECK_ALL_ANNONCES("CHECK_ALL_ANNONCES[_]***", 1),
-    CHECK_ANNONCE("CHECK_ANNONCE id[_]***", 2),
+    CHECK_ALL_ANNONCES("CHECK_ALL_ANNONCES[_]***", 2),
+    CHECK_ANNONCE("CHECK_ANNONCE id[_]***", 3),
     CHECK_ANNONCES_CLIENT("CHECK_ANNONCES_CLIENT idUtilisateur[_]***", 2),
     CHECK_ANNONCES_DOMAINE("CHECK_ANNONCES_DOMAINE domaine[_]***", 2),
     CHECK_DOMAINES("CHECK_DOMAINES[_]***", 1),
@@ -27,11 +28,15 @@ public enum MessageType {
     HELP("HELP[_]***", 2),
     ADDED("être ajouté"),
     CONNECTED("être connecté"),
+    DISCONNECTED("être déconnecté"),
+    NOT_CONNECTED("n'est pas connecté"),
+    NOT_EXISTS("n'existe pas"),
     UPDATED("être modifié"),
     DELETED("être supprimé"),
     SUCCESS("a pu"),
     FAILURE("n'a pas pu"),
     END("***"),
+    BYE("Connexion avec le serveur interrompu"),
     INVALID("INVALID message reçu");
 
     private final String message;
@@ -69,6 +74,12 @@ public enum MessageType {
             + SUCCESS.getMessage() + " "
             + CONNECTED.getMessage();
 
+    public static final String MSG_DISCONNECT_UTILISATEUR_SUCCESS
+            = DISCONNECT.name() + UNDERSCORE + SUCCESS.name() + "\n"
+            + UTILISATEUR.getMessage() + " "
+            + SUCCESS.getMessage() + " "
+            + DISCONNECTED.getMessage();
+
     public static final String MSG_UPDATE_UTILISATEUR_SUCCESS
             = UPDATE.name() + UNDERSCORE + SUCCESS.name() + "\n"
             + UTILISATEUR.getMessage() + " "
@@ -92,6 +103,12 @@ public enum MessageType {
             + UTILISATEUR.getMessage() + " "
             + FAILURE.getMessage() + " "
             + CONNECTED.getMessage();
+
+    public static final String MSG_DISCONNECT_UTILISATEUR_FAILURE
+            = DISCONNECT.name() + UNDERSCORE + FAILURE.name() + "\n"
+            + UTILISATEUR.getMessage() + " "
+            + FAILURE.getMessage() + " "
+            + DISCONNECTED.getMessage();
 
     public static final String MSG_UPDATE_UTILISATEUR_FAILURE
             = UPDATE.name() + UNDERSCORE + FAILURE.name() + "\n"
@@ -170,14 +187,19 @@ public enum MessageType {
             = "WELCOME" + "\n"
             + MSG_HELP;
 
-    public static final String MSG_QUIT
-            = "BYE";
-
     public static final String MSG_INVALID
-            = "Message invalide. Forme des messages attendu :" + "\n"
-            + MSG_HELP;
+            = INVALID.name() + "\n"
+            + "Message invalide." + "\n";
 
     public static final String MSG_TODO
-            = "Fonction non implémenté";
+            = "Fonction non implémenté." + "\n";
+
+    public static final String MSG_IS_NOT_CONNECTED
+            = UTILISATEUR.getMessage() + " "
+            + NOT_CONNECTED.getMessage() + "\n";
+    
+    public static final String MSG_IS_NOT_EXISTS
+            = UTILISATEUR.getMessage() + " "
+            + NOT_CONNECTED.getMessage() + "\n";
     // </editor-fold>
 }
