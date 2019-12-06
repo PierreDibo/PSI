@@ -31,7 +31,6 @@ public class SSL {
     private static String protocole = null;
 
     static class ConsoleInputReadTask implements Callable<String> {
-
         @Override
         @SuppressWarnings("SleepWhileInLoop")
         public String call() throws IOException {
@@ -39,7 +38,6 @@ public class SSL {
                     new InputStreamReader(System.in));
             String input;
             do {
-
                 try {
                     while (!br.ready()) {
                         Thread.sleep(200);
@@ -62,7 +60,6 @@ public class SSL {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-
         if (args.length < 2 && args.length > 5) {
             System.err.println("Usage : java SSL ip_gestionnaire port_gestionnaire");
             System.exit(-1);

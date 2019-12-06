@@ -13,7 +13,7 @@ keytool -genkey -keypass password \
 ```
 keytool -genkey -keypass password \
   -storepass password \
-  -keystore server.jks
+  -keystore client.jks
 ```
 
 * Export server file as a file which need to be import as trusted file for client
