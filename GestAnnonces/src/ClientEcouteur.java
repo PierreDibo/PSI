@@ -27,11 +27,10 @@ public class ClientEcouteur extends Client implements Runnable {
     @Override
     public void run() {
         try {
-            BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            BufferedReader br = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
 
             for (String message; (message = br.readLine()) != null;) {
-                System.out.println(message);
-                //parsing(message);
+                parsing(message);
             }
         } catch (IOException ex) {
             Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
@@ -52,20 +51,14 @@ public class ClientEcouteur extends Client implements Runnable {
         }
 
         switch (this.messageType) {
-            case CALL_OPEN:
-
-                break;
-            case CALL:
-
-                break;
-            case CALL_CLOSE:
-
-                break;
             case BYE:
                 System.out.println(this.messageType.getMessage());
                 break;
             case INVALID:
                 System.out.println(String.join(ESP, Arrays.copyOfRange(msg, i, msg.length)));
+                break;
+            case CONNECT_SUCCESS:
+                
                 break;
             default:
                 //System.out.println(String.join(ESP, Arrays.copyOfRange(msg, i, msg.length)));

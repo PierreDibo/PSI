@@ -37,7 +37,11 @@ public enum MessageType {
     FAILURE("n'a pas pu"),
     END("***"),
     BYE("Connexion avec le serveur interrompu"),
-    INVALID("INVALID message reçu");
+    INVALID("INVALID message reçu"),
+    CONNECT_SUCCESS("")
+    
+    
+    ;
 
     private final String message;
     private final int params;

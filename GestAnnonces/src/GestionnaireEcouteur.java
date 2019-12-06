@@ -133,14 +133,15 @@ public class GestionnaireEcouteur extends Gestionnaire implements Runnable, Mess
     }
 
     private void parse_connectUtilisateur(String[] msg, int i) throws InterruptedException {
+        String port;
         if (msg.length == messageType.getParameters()) {
             String pseudo = msg[i++];
             if (!existsPseudo(pseudo)) {
                 doesntExistUtilisateur(this.socket);
                 return;
             }
-            if (connectUtilisateur(pseudo, msg[i++], Integer.parseInt(msg[i++]))) {
-                connectUtilisateurSuccess(this.socket);
+            if (connectUtilisateur(pseudo, msg[i++], Integer.parseInt(port = msg[i++]))) {
+                connectUtilisateurSuccess(pseudo, port, this.socket);
             } else {
                 connectUtilisateurFailure(this.socket);
             }

@@ -7,12 +7,7 @@ import java.net.Socket;
  * @author Pierre Dibo
  * @author Aillerie Anthony
  */
-public interface MessagesGestionnaire {
-
-    public default void joinThread(Thread t) throws InterruptedException {
-        t.start();
-        t.join();
-    }
+public interface MessagesGestionnaire extends Messages {
 
     // <editor-fold defaultstate="collapsed" desc="METHODS UTILISATEUR">
     default void addUtilisateurSuccess(Socket s) throws InterruptedException {
@@ -23,8 +18,12 @@ public interface MessagesGestionnaire {
         joinThread(new Thread(new GestionnaireEcrivain(s, MessageType.MSG_ADD_UTILISATEUR_FAILURE)));
     }
 
-    default void connectUtilisateurSuccess(Socket s) throws InterruptedException {
-        joinThread(new Thread(new GestionnaireEcrivain(s, MessageType.MSG_CONNECT_UTILISATEUR_SUCCESS)));
+    default void connectUtilisateurSuccess(String pseudo, String port, Socket s) throws InterruptedException {
+        joinThread(new Thread(new GestionnaireEcrivain(s,
+                MessageType.MSG_CONNECT_UTILISATEUR_SUCCESS + "\n"
+                + pseudo + ":"
+                + port
+        )));
     }
 
     default void connectUtilisateurFailure(Socket s) throws InterruptedException {
@@ -90,7 +89,7 @@ public interface MessagesGestionnaire {
     default void doesntExistUtilisateur(Socket s) throws InterruptedException {
         joinThread(new Thread(new GestionnaireEcrivain(s, MessageType.MSG_IS_NOT_EXISTS)));
     }
-    
+
     default void existsUtilisateurSuccess(Socket s, int port) throws InterruptedException {
         joinThread(new Thread(new GestionnaireEcrivain(s, MessageType.MSG_WHOIS_SUCCESS)));
         InetSocketAddress inetSocketAddress = (InetSocketAddress) s.getRemoteSocketAddress();
@@ -100,7 +99,7 @@ public interface MessagesGestionnaire {
     default void existsUtilisateurFailure(Socket s) throws InterruptedException {
         joinThread(new Thread(new GestionnaireEcrivain(s, MessageType.MSG_WHOIS_FAILURE)));
     }
-    
+
     default void help(Socket s) throws InterruptedException {
         joinThread(new Thread(new GestionnaireEcrivain(s, MessageType.MSG_WELCOME)));
     }
@@ -112,6 +111,5 @@ public interface MessagesGestionnaire {
     default void invalid(Socket s) throws InterruptedException {
         joinThread(new Thread(new GestionnaireEcrivain(s, MessageType.MSG_INVALID)));
     }
-    
-    
+
 }
