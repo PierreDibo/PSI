@@ -25,7 +25,7 @@ public class GestionnaireEcrivain extends Gestionnaire implements Runnable {
     public void run() {
         try {
             BufferedWriter output = new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream()));
-            output.write(this.message);
+            output.write(this.message + MessageType.END.getMessage());
             output.newLine();
             output.flush();
         } catch (IOException ex) {

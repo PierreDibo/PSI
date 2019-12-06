@@ -102,7 +102,7 @@ public interface MessagesGestionnaire {
     }
     
     default void help(Socket s) throws InterruptedException {
-        joinThread(new Thread(new GestionnaireEcrivain(s, MessageType.MSG_HELP)));
+        joinThread(new Thread(new GestionnaireEcrivain(s, MessageType.MSG_WELCOME)));
     }
 
     default void todo(Socket s) throws InterruptedException {

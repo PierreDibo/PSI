@@ -3,6 +3,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -33,6 +34,10 @@ public class GestionnaireEcouteur extends Gestionnaire implements Runnable, Mess
 
             for (String msg; (msg = input.readLine()) != null;) {
                 System.out.println(msg);
+                String message = msg.substring(msg.length() - 3, msg.length());
+                if (message.equals(MessageType.END.getMessage())) {
+                    msg = msg.replace("***", " ***");
+                }
                 if (msg.endsWith(MessageType.END.getMessage())) {
                     parsing(msg);
                 } else {
@@ -194,6 +199,7 @@ public class GestionnaireEcouteur extends Gestionnaire implements Runnable, Mess
 
     private void parse_addAnnonce(String message, String[] msg) throws InterruptedException {
         String[] m = message.split("\\|\\|");
+
         if (this.currentUser != null) {
             if (m.length != 2) {
                 invalid(this.socket);
@@ -318,6 +324,9 @@ public class GestionnaireEcouteur extends Gestionnaire implements Runnable, Mess
     protected static String getDescription(String[] msg, int index) {
         String s = "";
         for (; index < msg.length; index++) {
+            if (msg[index].equals("***")) {
+                break;
+            }
             s += msg[index] + " ";
         }
         return s;
