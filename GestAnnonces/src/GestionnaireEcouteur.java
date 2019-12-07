@@ -2,6 +2,7 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -141,7 +142,8 @@ public class GestionnaireEcouteur extends Gestionnaire implements Runnable, Mess
                 return;
             }
             if (connectUtilisateur(pseudo, msg[i++], Integer.parseInt(port = msg[i++]))) {
-                connectUtilisateurSuccess(pseudo, port, this.socket);
+                InetSocketAddress sockaddr = (InetSocketAddress)this.socket.getRemoteSocketAddress();
+                connectUtilisateurSuccess(pseudo, sockaddr.getAddress().getHostAddress(), port, this.socket);
             } else {
                 connectUtilisateurFailure(this.socket);
             }

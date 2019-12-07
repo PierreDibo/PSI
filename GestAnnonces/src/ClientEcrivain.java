@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -18,9 +19,11 @@ import java.util.logging.Logger;
 public class ClientEcrivain extends Client implements Runnable {
 
     private Socket socket;
+    private MessageType messageType;
 
     public ClientEcrivain(Socket s) {
         this.socket = s;
+        this.messageType = null;
     }
 
     @Override
@@ -46,15 +49,22 @@ public class ClientEcrivain extends Client implements Runnable {
     }
 
     private void parse(String content) throws IOException {
-        MessageType message;
         String[] input = content.split("\\s+");
         int i = 0;
         try {
-            message = MessageType.valueOf(input[i++]);
+            messageType = MessageType.valueOf(input[i++]);
         } catch (IllegalArgumentException ex) {
-            message = MessageType.INVALID;
+            messageType = MessageType.INVALID;
         }
-        switch (message) {
+        if (protocole == null) {
+            non_secure(input, content, i);
+        } else {
+            secure(input, content);
+        }
+    }
+
+    private void secure(String[] input, String content) throws IOException {
+        switch (this.messageType) {
             case CALL_OPEN:
                 break;
             case CALL:
@@ -64,6 +74,40 @@ public class ClientEcrivain extends Client implements Runnable {
             default:
                 write(content, this.socket);
                 break;
+        }
+    }
+
+    private void non_secure(String[] input, String content, int i) throws IOException {
+        switch (this.messageType) {
+            case CALL_OPEN:
+                callOpen(input, content, i);
+                break;
+            case CALL:
+                break;
+            case CALL_CLOSE:
+                break;
+            default:
+                write(content, this.socket);
+                break;
+        }
+    }
+
+    private void callOpen(String[] input, String content, int i) throws IOException {
+        InetAddress adresseClient = InetAddress.getByName(input[i++]);
+        int portClient = Integer.parseInt(input[i++]);
+
+        if (Policy.isBanned(adresseClient, portClient) == null) {
+            if (Policy.isAccepted(adresseClient, portClient) == null) {
+                Socket s = new Socket(adresseClient, portClient);
+                Contact contact = new Contact(content, adresseClient, portClient, s);
+                new Thread(contact).start();
+                contact.write(content);
+                Policy.addContact(contact);
+            } else {
+                System.out.println("Déja connecté.");
+            }
+        } else {
+            System.out.println("Dans ta ban list");
         }
     }
 

@@ -2,7 +2,9 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,6 +32,10 @@ public class ClientEcouteur extends Client implements Runnable {
             BufferedReader br = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
 
             for (String message; (message = br.readLine()) != null;) {
+                String msg = message.substring(message.length() - 3, message.length());
+                if (msg.equals(MessageType.END.getMessage())) {
+                    message = message.replace("***", " ***");
+                }
                 parsing(message);
             }
         } catch (IOException ex) {
@@ -37,7 +43,7 @@ public class ClientEcouteur extends Client implements Runnable {
         }
     }
 
-    private void parsing(String message) {
+    private void parsing(String message) throws UnknownHostException {
         String[] msg;
         int i;
 
@@ -58,7 +64,9 @@ public class ClientEcouteur extends Client implements Runnable {
                 System.out.println(String.join(ESP, Arrays.copyOfRange(msg, i, msg.length)));
                 break;
             case CONNECT_SUCCESS:
-                
+                pseudo = msg[i++];
+                System.out.println(message);
+                new Thread(new ClientServeur(InetAddress.getByName(msg[i++]), Integer.parseInt(msg[i++]))).start();
                 break;
             default:
                 //System.out.println(String.join(ESP, Arrays.copyOfRange(msg, i, msg.length)));

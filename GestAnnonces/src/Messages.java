@@ -1,4 +1,6 @@
 
+import java.net.Socket;
+
 /**
  *
  * @author Pierre Dibo
@@ -10,4 +12,13 @@ public interface Messages {
         t.start();
         t.join();
     }
+
+    default void todo(Socket s) throws InterruptedException {
+        joinThread(new Thread(new GestionnaireEcrivain(s, MessageType.MSG_TODO)));
+    }
+
+    default void invalid(Socket s) throws InterruptedException {
+        joinThread(new Thread(new GestionnaireEcrivain(s, MessageType.MSG_INVALID)));
+    }
+
 }

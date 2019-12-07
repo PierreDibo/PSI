@@ -21,9 +21,9 @@ public enum MessageType {
     CHECK_ANNONCES_DOMAINE("CHECK_ANNONCES_DOMAINE domaine[_]", 3),
     CHECK_DOMAINES("CHECK_DOMAINES[_]", 2),
     WHOIS("WHOIS idUtilisateur[_]", 3),
-    CALL_OPEN("CALL_OPEN idUtilisateur[_]", 3),
-    CALL("CALL message[_]", 2),
-    CALL_CLOSE("CALL_CLOSE idUtilisateur[_]", 3),
+    CALL_OPEN("CALL_OPEN adresseClient portClient (monPseudo monAdresse monPort)[_]", 4),
+    CALL("CALL (mypseudo) pseudo message[_]", 4),
+    CALL_CLOSE("CALL_CLOSE (mypseudo) pseudo[_]", 3),
     QUIT("QUIT[_]", 2),
     HELP("HELP[_]", 2),
     ADDED("être ajouté"),
@@ -38,10 +38,10 @@ public enum MessageType {
     END("***"),
     BYE("Connexion avec le serveur interrompu"),
     INVALID("INVALID message reçu"),
-    CONNECT_SUCCESS("")
-    
-    
-    ;
+    CONNECT_SUCCESS(""),
+    IT_IS(""),
+    ERROR(""),
+    BANNED("");
 
     private final String message;
     private final int params;
@@ -73,10 +73,7 @@ public enum MessageType {
             + ADDED.getMessage();
 
     public static final String MSG_CONNECT_UTILISATEUR_SUCCESS
-            = CONNECT.name() + UNDERSCORE + SUCCESS.name() + "\n"
-            + UTILISATEUR.getMessage() + " "
-            + SUCCESS.getMessage() + " "
-            + CONNECTED.getMessage();
+            = CONNECT.name() + UNDERSCORE + SUCCESS.name();
 
     public static final String MSG_DISCONNECT_UTILISATEUR_SUCCESS
             = DISCONNECT.name() + UNDERSCORE + SUCCESS.name() + "\n"
@@ -207,4 +204,23 @@ public enum MessageType {
             + UTILISATEUR.getMessage() + " "
             + NOT_CONNECTED.getMessage() + "\n";
     // </editor-fold>
+
+    public static final String MSG_CALL_OPEN_SUCCESS
+            = CALL_OPEN.name() + UNDERSCORE + SUCCESS.name();
+
+    public static final String MSG_CALL_OPEN_FAILURE
+            = CALL_OPEN.name() + UNDERSCORE + ERROR.name();
+
+    public static final String MSG_CALL_CLOSE_SUCCESS
+            = CALL_CLOSE.name() + UNDERSCORE + SUCCESS.name();
+
+    public static final String MSG_CALL_CLOSE_FAILURE
+            = CALL_CLOSE.name() + UNDERSCORE + ERROR.name();
+
+    public static final String MSG_CONTACT_BANNED
+            = BANNED.name();
+
+    public static final String MSG_CONTACT_ALREADY_CONNECTED
+            = "ALREADY_CONNECTED";
+
 }
