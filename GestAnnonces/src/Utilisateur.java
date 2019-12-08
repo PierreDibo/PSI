@@ -1,33 +1,61 @@
 
 import java.net.Socket;
-import java.util.Objects;
 
 /**
  *
- * <<<<<<< HEAD
- * @a
- *
- * uthor dibop =======
  * @author Pierre Dibo
- * @author Aillerie Anthony >>>>>>> 3193ea92ca6bf9d787b84d025c52ca3449c0469c
+ * @author Aillerie Anthony
  */
 public class Utilisateur {
 
+    private final int identifiant;
+    private static int compteur = 0;
     private String pseudo;
-    private String motDePasse;
+    private char[] motDePasse;
     private final Socket socket;
+    private int port;
 
-    public Utilisateur(String pseudo, String motDePasse, Socket socket) {
+    public Utilisateur(String pseudo, char[] motDePasse, Socket socket) {
+        this.identifiant = compteur++;
         this.pseudo = pseudo;
         this.motDePasse = motDePasse;
         this.socket = socket;
+        this.port = 0;
+    }
+
+    public Utilisateur(String pseudo, char[] motDePasse, Socket socket, int p) {
+        this.identifiant = compteur++;
+        this.pseudo = pseudo;
+        this.motDePasse = motDePasse;
+        this.socket = socket;
+        this.port = p;
+    }
+
+    public Utilisateur(int id, String pseudo, char[] motDePasse, Socket socket) {
+        this.identifiant = id;
+        this.pseudo = pseudo;
+        this.motDePasse = motDePasse;
+        this.socket = socket;
+        this.port = 0;
+    }
+
+    public Utilisateur(int id) {
+        this.identifiant = id;
+        this.pseudo = null;
+        this.motDePasse = null;
+        this.socket = null;
+        this.port = 0;
+    }
+
+    public int getIdentifiant() {
+        return identifiant;
     }
 
     public String getPseudo() {
         return pseudo;
     }
 
-    public String getMotDePasse() {
+    public char[] getMotDePasse() {
         return motDePasse;
     }
 
@@ -39,15 +67,22 @@ public class Utilisateur {
         this.pseudo = pseudo;
     }
 
-    public void setMotDePasse(String motDePasse) {
+    public void setMotDePasse(char[] motDePasse) {
         this.motDePasse = motDePasse;
+    }
+
+    public int getPort() {
+        return this.port;
+    }
+    
+    public void setPort(int port) {
+    	this.port = port;
     }
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 43 * hash + Objects.hashCode(this.pseudo);
-        hash = 43 * hash + Objects.hashCode(this.motDePasse);
+        int hash = 3;
+        hash = 67 * hash + this.identifiant;
         return hash;
     }
 
@@ -63,14 +98,12 @@ public class Utilisateur {
             return false;
         }
         final Utilisateur other = (Utilisateur) obj;
-        if (!Objects.equals(this.pseudo, other.pseudo)) {
-            return false;
-        }
-        return Objects.equals(this.motDePasse, other.motDePasse);
+        return this.identifiant == other.identifiant;
     }
 
     @Override
     public String toString() {
-        return "Pseudo : " + pseudo;
+        return "Utilisateur -> " + "pseudo : " + pseudo + ", identifiant : " + identifiant;
     }
+
 }

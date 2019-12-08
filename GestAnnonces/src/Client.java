@@ -1,16 +1,9 @@
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.Scanner;
-import java.util.concurrent.Callable;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.HashMap;
 
 /**
  *
@@ -19,113 +12,95 @@ import java.util.logging.Logger;
  */
 public class Client {
 
-    static class ConsoleInputReadTask implements Callable<String> {
+    protected static class Policy {
 
-        @Override
-        @SuppressWarnings("SleepWhileInLoop")
-        public String call() throws IOException {
-            BufferedReader br = new BufferedReader(
-                    new InputStreamReader(System.in));
-            String input;
-            do {
-                try {
-                    // wait until we have data to complete a readLine()
-                    while (!br.ready()) {
-                        Thread.sleep(200);
-                    }
-                    input = br.readLine();
-                } catch (InterruptedException e) {
-                    System.out.println("ConsoleInputReadTask() cancelled");
-                    return null;
+        protected static final HashMap<String, Contact> ACCEPTED = new HashMap<>();
+        protected static final HashMap<String, Contact> BANNED = new HashMap<>();
+
+        protected static Contact isBanned(String pseudo) {
+            return BANNED.get(pseudo);
+        }
+
+        protected static Contact isBanned(InetAddress addr, int port) throws UnknownHostException {
+            for (Contact c : BANNED.values()) {
+                if (c.getIaddr().equals(addr)) {
+                    return c;
                 }
-            } while ("".equals(input));
-            return input;
+            }
+            return null;
         }
 
-        public void close() {
+        protected static Contact isAccepted(String pseudo) {
+            return ACCEPTED.get(pseudo);
+        }
 
+        protected static Contact isAccepted(InetAddress addr, int port) throws UnknownHostException {
+            for (Contact c : ACCEPTED.values()) {
+                if (c.getIaddr().equals(addr)) {
+                    return c;
+                }
+            }
+            return null;
+        }
+
+        protected static void addContact(Contact contact) {
+            ACCEPTED.put(contact.getPseudo(), contact);
+        }
+
+        protected static boolean alreadyConnected(InetAddress addr, int port) throws UnknownHostException {
+            return isBanned(addr, port) == null ? isAccepted(addr, port) == null : true;
+        }
+
+        protected static void addBanContact(String pseudo) {
+            Contact contact = isAccepted(pseudo);
+            if (isBanned(pseudo) == null) {
+                if (contact != null) {
+                    BANNED.put(pseudo, contact);
+                    removeContact(pseudo);
+                }
+            }
+        }
+
+        protected static void removeContact(String peudo) {
+            ACCEPTED.remove(peudo);
+        }
+
+        protected static void removeBanContact(String peudo) {
+            BANNED.remove(peudo);
         }
     }
-    public final int identifiant;
-    private static int compteur = 0;
-    //private static final Scanner SC = new Scanner(System.in);
 
-    public Client() {
-        this.identifiant = compteur++;
-    }
+    //PROTOCOL_TSL = 0
+    protected static String protocole = null;
+    protected static String pseudo;
+    protected static final int ATTENTE = 100, ERROR = -1, IP_GESTIONNAIRE = 0, PORT_GESTIONNAIRE = 1, PROTOCOLE_INDEX = 2;
 
     /**
      * @param args the command line arguments
+     * @throws java.net.UnknownHostException
+     * @throws java.io.IOException
      */
-    public static void main(String[] args) {
-        try {
-            Socket socket = new Socket(InetAddress.getByName(args[0]), Integer.parseInt(args[1]));
+    public static void main(String[] args) throws UnknownHostException, IOException {
+        InetAddress ia;
+        Socket socket;
+        int port;
 
-            new Thread(new Ecrivain(socket)).start();
-            new Thread(new Ecouteur(socket)).start();
-
-        } catch (UnknownHostException ex) {
-            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+        if (args.length < 2 || args.length > 3) {
+            System.err.println("Usage : java Client ip_gestionnaire port_gestionnaire");
+            System.exit(ERROR);
         }
+
+        ia = InetAddress.getByName(args[IP_GESTIONNAIRE]);
+        port = Integer.parseInt(args[PORT_GESTIONNAIRE]);
+        socket = new Socket(ia, port);
+
+        if (args.length == 3) {
+            protocole = args[PROTOCOLE_INDEX];
+        }
+
+        new Thread(new ClientEcrivain(socket)).start();
+        new Thread(new ClientEcouteur(socket)).start();
+
     }
 
-    static class Ecrivain implements Runnable {
-
-        private final Socket socket;
-
-        public Ecrivain(Socket socket) {
-            this.socket = socket;
-        }
-
-        @Override
-        public void run() {
-            //BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-            ConsoleInputReadTask console = new ConsoleInputReadTask();
-            while (this.socket != null && !this.socket.isInputShutdown()) {
-                try {
-                    BufferedWriter output = new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream()));
-                    String content = console.call();
-                    while (!content.contains(Message.FIN_MESSAGE.trim())) {
-                        content += " " + console.call();
-                    }
-
-                    output.write(content + "\n");
-                    output.flush();
-
-                } catch (IOException ex) {
-                    Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-        }
-    }
-
-    static class Ecouteur implements Runnable {
-
-        private final Socket socket;
-
-        public Ecouteur(Socket socket) {
-            this.socket = socket;
-        }
-
-        @Override
-        public void run() {
-            try {
-                BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                String line;
-
-                while ((line = br.readLine()) != null) {
-                    System.out.println(line);
-                    if (line.startsWith("AUREVOIR")) {
-                        this.socket.close();
-                        break;
-                    }
-                }
-
-            } catch (IOException ex) {
-                Logger.getLogger(Gestionnaire.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-    }
 }

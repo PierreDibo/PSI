@@ -21,6 +21,21 @@ public class Annonce {
         this.description = desc;
     }
 
+    public Annonce(int id, String nom, Domaine d, long p, String desc) {
+        this.identifiant = id;
+        this.nom = nom;
+        this.domaine = d;
+        this.prix = p;
+        this.description = desc;
+    }
+
+    public Annonce(int id) {
+        this.identifiant = id;
+        this.nom = null;
+        this.domaine = null;
+        this.description = null;
+    }
+
     public int getIdentifiant() {
         return identifiant;
     }
@@ -42,7 +57,7 @@ public class Annonce {
     }
 
     public static Domaine getDomaine(String s) {
-        switch (s) {
+        switch (s.toLowerCase()) {
             case "voiture":
                 return Domaine.voiture;
             case "moto":
@@ -53,10 +68,8 @@ public class Annonce {
                 return Domaine.electromenager;
             case "telephone":
                 return Domaine.telephone;
-            case "autres":
-                return Domaine.autres;
             default:
-                return null;
+                return Domaine.autres;
         }
     }
 
@@ -70,6 +83,28 @@ public class Annonce {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 59 * hash + this.identifiant;
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Annonce other = (Annonce) obj;
+        return this.identifiant == other.identifiant;
     }
 
     @Override
