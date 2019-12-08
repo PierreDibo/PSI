@@ -2,9 +2,7 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -40,7 +38,11 @@ public class GestionnaireEcouteur extends Gestionnaire implements Runnable, Mess
                     msg = msg.replace("***", " ***");
                 }
                 if (msg.endsWith(MessageType.END.getMessage())) {
-                    parsing(msg);
+                    try {
+                        parsing(msg);
+                    } catch (NumberFormatException ex1) {
+                        invalid(this.socket);
+                    }
                 } else {
                     invalid(this.socket);
                 }
@@ -110,6 +112,9 @@ public class GestionnaireEcouteur extends Gestionnaire implements Runnable, Mess
             case HELP:
                 parse_help(msg);
                 break;
+            case QUIT:
+                quit(this.socket);
+                break;
             case INVALID:
                 invalid(this.socket);
                 break;
@@ -142,8 +147,8 @@ public class GestionnaireEcouteur extends Gestionnaire implements Runnable, Mess
                 return;
             }
             if (connectUtilisateur(pseudo, msg[i++], Integer.parseInt(port = msg[i++]))) {
-                InetSocketAddress sockaddr = (InetSocketAddress)this.socket.getRemoteSocketAddress();
-                connectUtilisateurSuccess(pseudo, sockaddr.getAddress().getHostAddress(), port, this.socket);
+                //InetSocketAddress sockaddr = (InetSocketAddress)this.socket.getRemoteSocketAddress();
+                connectUtilisateurSuccess(pseudo, port, this.socket);
             } else {
                 connectUtilisateurFailure(this.socket);
             }

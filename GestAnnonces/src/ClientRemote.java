@@ -7,9 +7,9 @@ import java.net.InetAddress;
  */
 public class ClientRemote {
 
-    private final String pseudo;
-    private final InetAddress iaddr;
-    private final int port;
+    protected final String pseudo;
+    protected final InetAddress iaddr;
+    protected final int port;
 
     public ClientRemote(String pseudo, InetAddress iaddr, int port) {
         this.pseudo = pseudo;
@@ -29,4 +29,7 @@ public class ClientRemote {
         return port;
     }
 
+    public boolean isEquals(InetAddress addr, int p) {
+        return iaddr.equals(addr) && port == p;
+    }
 }

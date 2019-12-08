@@ -18,10 +18,9 @@ public interface MessagesGestionnaire extends Messages {
         joinThread(new Thread(new GestionnaireEcrivain(s, MessageType.MSG_ADD_UTILISATEUR_FAILURE)));
     }
 
-    default void connectUtilisateurSuccess(String pseudo, String adresse, String port, Socket s) throws InterruptedException {
-        joinThread(new Thread(new GestionnaireEcrivain(s,
-                MessageType.MSG_CONNECT_UTILISATEUR_SUCCESS + " " + pseudo + " " + adresse + " " + port
-        )));
+    default void connectUtilisateurSuccess(String pseudo, String port, Socket s) throws InterruptedException {
+        joinThread(new Thread(new GestionnaireEcrivain(s, MessageType.MSG_CONNECT_UTILISATEUR_SUCCESS
+                + " " + pseudo + " " + port)));
     }
 
     default void connectUtilisateurFailure(Socket s) throws InterruptedException {
@@ -100,6 +99,10 @@ public interface MessagesGestionnaire extends Messages {
 
     default void help(Socket s) throws InterruptedException {
         joinThread(new Thread(new GestionnaireEcrivain(s, MessageType.MSG_WELCOME)));
+    }
+
+    default void quit(Socket s) throws InterruptedException {
+        joinThread(new Thread(new GestionnaireEcrivain(s, MessageType.MSG_QUIT)));
     }
 
 }

@@ -21,7 +21,8 @@ public enum MessageType {
     CHECK_ANNONCES_DOMAINE("CHECK_ANNONCES_DOMAINE domaine[_]", 3),
     CHECK_DOMAINES("CHECK_DOMAINES[_]", 2),
     WHOIS("WHOIS idUtilisateur[_]", 3),
-    CALL_OPEN("CALL_OPEN adresseClient portClient (monPseudo monAdresse monPort)[_]", 4),
+    IT_IS("IT_IS adresse port[_]", 4),
+    CALL_OPEN("CALL_OPEN adresseClient portClient (monPseudo monAdresse monPort)[_]", 5),
     CALL("CALL (mypseudo) pseudo message[_]", 4),
     CALL_CLOSE("CALL_CLOSE (mypseudo) pseudo[_]", 3),
     QUIT("QUIT[_]", 2),
@@ -38,10 +39,14 @@ public enum MessageType {
     END("***"),
     BYE("Connexion avec le serveur interrompu"),
     INVALID("INVALID message reçu"),
-    CONNECT_SUCCESS(""),
-    IT_IS(""),
+    CONNECT_SUCCESS("CONNECT_SUCCESS pseudo adresse port[_]", 5),
     ERROR(""),
-    BANNED("");
+    BANNED(""),
+    CALL_CLOSE_OK(""),
+    CALL_OPEN_SUCCESS("CALL_OPEN_SUCCESS pseudo[_]"),
+    CALL_OPEN_ERROR(""),
+    SENT(""),
+    ALREADY_CONNECTED("");
 
     private final String message;
     private final int params;
@@ -94,31 +99,31 @@ public enum MessageType {
             + DELETED.getMessage();
 
     public static final String MSG_ADD_UTILISATEUR_FAILURE
-            = NEW.name() + UNDERSCORE + FAILURE.name() + "\n"
+            = NEW.name() + UNDERSCORE + ERROR.name() + "\n"
             + UTILISATEUR.getMessage() + " "
             + FAILURE.getMessage() + " "
             + ADDED.getMessage();
 
     public static final String MSG_CONNECT_UTILISATEUR_FAILURE
-            = CONNECT.name() + UNDERSCORE + FAILURE.name() + "\n"
+            = CONNECT.name() + UNDERSCORE + ERROR.name() + "\n"
             + UTILISATEUR.getMessage() + " "
             + FAILURE.getMessage() + " "
             + CONNECTED.getMessage();
 
     public static final String MSG_DISCONNECT_UTILISATEUR_FAILURE
-            = DISCONNECT.name() + UNDERSCORE + FAILURE.name() + "\n"
+            = DISCONNECT.name() + UNDERSCORE + ERROR.name() + "\n"
             + UTILISATEUR.getMessage() + " "
             + FAILURE.getMessage() + " "
             + DISCONNECTED.getMessage();
 
     public static final String MSG_UPDATE_UTILISATEUR_FAILURE
-            = UPDATE.name() + UNDERSCORE + FAILURE.name() + "\n"
+            = UPDATE.name() + UNDERSCORE + ERROR.name() + "\n"
             + UTILISATEUR.getMessage() + " "
             + FAILURE.getMessage() + " "
             + UPDATED.getMessage();
 
     public static final String MSG_DELETE_UTILISATEUR_FAILURE
-            = DELETE.name() + UNDERSCORE + FAILURE.name() + "\n"
+            = DELETE.name() + UNDERSCORE + ERROR.name() + "\n"
             + UTILISATEUR.getMessage() + " "
             + FAILURE.getMessage() + " "
             + DELETED.getMessage();
@@ -131,37 +136,37 @@ public enum MessageType {
 
     // <editor-fold defaultstate="collapsed" desc="MESSAGES ANNONCES">
     public static final String MSG_ADD_ANNONCE_SUCCESS
-            = ADD_ANNONCE.name() + "\n"
+            = ADD_ANNONCE.name() + UNDERSCORE + SUCCESS.name() + "\n"
             + ANNONCE.getMessage() + " "
             + SUCCESS.getMessage() + " "
             + ADDED.getMessage();
 
     public static final String MSG_UPDATE_ANNONCE_SUCCESS
-            = UPDATE.name() + "\n"
+            = UPDATE.name() + UNDERSCORE + ANNONCE.name() + UNDERSCORE + SUCCESS.name() + "\n"
             + ANNONCE.getMessage() + " "
             + SUCCESS.getMessage() + " "
             + UPDATED.getMessage();
 
     public static final String MSG_DELETE_ANNONCE_SUCCESS
-            = DELETE.name() + "\n"
+            = DELETE.name() + UNDERSCORE + ANNONCE.name() + UNDERSCORE + SUCCESS.name() + "\n"
             + ANNONCE.getMessage() + " "
             + SUCCESS.getMessage() + " "
             + DELETED.getMessage();
 
     public static final String MSG_ADD_ANNONCE_FAILURE
-            = ADD_ANNONCE.name() + "\n"
+            = ADD_ANNONCE.name() + UNDERSCORE + ERROR.name() + "\n"
             + ANNONCE.getMessage() + " "
             + FAILURE.getMessage() + " "
             + ADDED.getMessage();
 
     public static final String MSG_UPDATE_ANNONCE_FAILURE
-            = UPDATE.name() + "\n"
+            = UPDATE.name() + UNDERSCORE + ANNONCE.name() + UNDERSCORE + ERROR.name() + "\n"
             + ANNONCE.getMessage() + " "
             + FAILURE.getMessage() + " "
             + UPDATED.getMessage();
 
     public static final String MSG_DELETE_ANNONCE_FAILURE
-            = DELETE.name() + "\n"
+            = DELETE.name() + UNDERSCORE + ANNONCE.name() + UNDERSCORE + ERROR.name() + "\n"
             + ANNONCE.getMessage() + " "
             + FAILURE.getMessage() + " "
             + DELETED.getMessage();
@@ -222,5 +227,9 @@ public enum MessageType {
 
     public static final String MSG_CONTACT_ALREADY_CONNECTED
             = "ALREADY_CONNECTED";
+
+    public static final String MSG_QUIT
+            = BYE.name() + "\n"
+            + BYE.getMessage();
 
 }
