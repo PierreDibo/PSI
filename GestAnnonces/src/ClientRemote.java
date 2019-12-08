@@ -3,7 +3,8 @@ import java.net.InetAddress;
 
 /**
  *
- * @author dibop
+ * @author Pierre Dibo
+ * @author Aillerie Anthony
  */
 public class ClientRemote {
 

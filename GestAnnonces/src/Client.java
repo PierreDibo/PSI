@@ -122,7 +122,7 @@ public class Client {
         int port;
 
         if (args.length < 3 || args.length > 4) {
-            System.err.println("Usage : java Client ip_gestionnaire port_gestionnaire [protocole] [ip_client]");
+            System.err.println("Usage : java Client ip_gestionnaire port_gestionnaire [protocole] ip_client");
             System.exit(ERROR);
         }
 
@@ -144,6 +144,10 @@ public class Client {
                 break;
         }
 
+        if (protocole != null) {
+            System.out.println("Protocole non implémenté");
+            protocole = null;
+        }
         ClientEcouteur ecouteur = new ClientEcouteur(socket, protocole, clientAddress);
         new Thread(ecouteur).start();
         new Thread(new ClientEcrivain(socket, ecouteur)).start();

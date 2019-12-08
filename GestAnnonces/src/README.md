@@ -1,7 +1,23 @@
-TSL Communication
+Communication
 ==================
 
-# Configuration
+# Configuration programme
+
+```bash
+make
+```
+
+* Gestionnaire
+```
+$sudo java Gestionnaire ip_adresse port_ecoute
+```
+
+* Client
+```
+$sudo java Client ip_gestionnaire port_gestionnaire [protocole] ip_client
+```
+
+# Configuration TSL
 
 * Create file server
 ```
