@@ -5,38 +5,37 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.InetAddress;
-import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.net.ssl.SSLSocket;
 
 /**
  *
  * @author Pierre Dibo
  * @author Aillerie Anthony
  */
-public class Contact extends Client implements Runnable {
+public class ContactSSL extends Client implements Runnable {
 
     protected ExecutorService executor = Executors.newSingleThreadExecutor();
 
     protected final ClientRemote remote;
-    protected final Socket socket;
-    protected BufferedReader br;
+    protected final SSLSocket socket;
     protected String pseudo;
     protected InetAddress iaddr;
     protected int port;
     protected MessageType messageType;
 
-    public Contact(ClientRemote remote, Socket socket) {
+    public ContactSSL(ClientRemote remote, SSLSocket socket) {
         this.remote = remote;
         this.socket = socket;
         this.pseudo = null;
     }
 
-    public Contact(ClientRemote remote, Socket socket, String pseudo, InetAddress iaddr, int port) {
+    public ContactSSL(ClientRemote remote, SSLSocket socket, String pseudo, InetAddress iaddr, int port) {
         this.remote = remote;
         this.socket = socket;
         this.pseudo = pseudo;
@@ -62,7 +61,7 @@ public class Contact extends Client implements Runnable {
         return remote;
     }
 
-    public Socket getSocket() {
+    public SSLSocket getSocket() {
         return socket;
     }
 
@@ -101,21 +100,18 @@ public class Contact extends Client implements Runnable {
     @Override
     public void run() {
         try {
-            while (this.socket.isConnected()) {
-                if (!this.socket.isInputShutdown()) {
-                    this.br = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
+            BufferedReader br = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
+
+            for (String message; !this.socket.isClosed() && (message = br.readLine()) != null;) {
+                String msg = message.substring(message.length() - 3, message.length());
+                if (msg.equals(MessageType.END.getMessage())) {
+                    message = message.replace("***", " ***");
                 }
-                for (String message; (message = br.readLine()) != null;) {
-                    String msg = message.substring(message.length() - 3, message.length());
-                    if (msg.equals(MessageType.END.getMessage())) {
-                        message = message.replace("***", " ***");
-                    }
-                    try {
-                        parsing(message);
-                    } catch (NumberFormatException ex) {
-                        System.err.println("Erreur message envoyé");
-                        write(MessageType.MSG_INVALID);
-                    }
+                try {
+                    parsing(message);
+                } catch (NumberFormatException ex) {
+                    System.err.println("Erreur message envoyé");
+                    write(MessageType.MSG_INVALID);
                 }
             }
         } catch (UnknownHostException ex) {
@@ -161,14 +157,6 @@ public class Contact extends Client implements Runnable {
             case SENT:
                 System.out.println(message);
                 break;
-            case BAN:
-                System.out.println(message);
-                parse_ban(input, i);
-                break;
-            case UNBAN:
-                System.out.println(message);
-                parse_unban(input, i);
-                break;
             case ALREADY_CONNECTED:
                 System.out.println(message);
                 break;
@@ -181,8 +169,6 @@ public class Contact extends Client implements Runnable {
     }
 
     private void parse_callOpen(String[] input, int i) throws UnknownHostException, IOException {
-        i++;
-        i++;
         String contactPseudo = input[i++];
         InetAddress contactAddr = InetAddress.getByName(input[i++]);
         int contactPort = Integer.parseInt(input[i++]);
@@ -194,7 +180,7 @@ public class Contact extends Client implements Runnable {
             if (Policy.isBanned(this.remote.getPseudo(), this.pseudo) == null) {
                 if (Policy.isAccepted(this.remote.getPseudo(), this.pseudo) == null) {
                     write(MessageType.CALL_OPEN_SUCCESS.name() + " " + this.remote.getPseudo());
-                    Policy.addContact(this.remote.getPseudo(), this);
+                    PolicySSL.addContact(this.remote.getPseudo(), this);
                 } else {
                     write(MessageType.MSG_CALL_OPEN_FAILURE + "\n" + MessageType.MSG_CONTACT_ALREADY_CONNECTED);
                 }
@@ -218,7 +204,7 @@ public class Contact extends Client implements Runnable {
         if (Policy.isBanned(this.remote.getPseudo(), this.pseudo) == null) {
             if (Policy.isAccepted(this.remote.getPseudo(), this.pseudo) == null) {
                 write(MessageType.CALL_OPEN_SUCCESS.name() + " " + this.remote.getPseudo());
-                Policy.addContact(this.remote.getPseudo(), this);
+                PolicySSL.addContact(this.remote.getPseudo(), this);
             } else {
                 write(MessageType.MSG_CALL_OPEN_FAILURE + "\n" + MessageType.MSG_CONTACT_ALREADY_CONNECTED);
                 System.out.println(MessageType.MSG_CONTACT_ALREADY_CONNECTED);
@@ -247,7 +233,6 @@ public class Contact extends Client implements Runnable {
         Contact contact = Policy.isAccepted(this.remote.getPseudo(), this.pseudo);
         String infos = MessageType.CALL_CLOSE_OK.name();
         contact.write(infos);
-
         try {
             Thread.sleep(100);
         } catch (InterruptedException ex) {
@@ -265,34 +250,6 @@ public class Contact extends Client implements Runnable {
     @Override
     public String toString() {
         return "Contact{" + "pseudo=" + pseudo + ", iaddr=" + iaddr + ", port=" + port + '}';
-    }
-
-    private void parse_ban(String[] input, int i) throws IOException {
-        if (this.pseudo != null) {
-            return;
-        }
-        Contact contact;
-        if ((contact = Policy.isAccepted(this.remote.getPseudo(), this.pseudo)) != null) {
-            Policy.removeContact(this.remote.getPseudo(), this.pseudo);
-            contact.br.close();
-            Policy.addBanContact(this.remote.getPseudo(), contact);
-        } else {
-            System.out.println("ALREADY_BAN " + this.pseudo);
-        }
-    }
-
-    private void parse_unban(String[] input, int i) throws IOException {
-        if (this.pseudo != null) {
-            return;
-        }
-        Contact contact;
-        if ((contact = Policy.isBanned(this.remote.getPseudo(), this.pseudo)) != null) {
-            Policy.removeBanContact(this.remote.getPseudo(), this.pseudo);
-            contact.br = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
-            Policy.addContact(this.remote.getPseudo(), contact);
-        } else {
-            System.out.println("ALREADY_UNBAN " + this.pseudo);
-        }
     }
 
 }

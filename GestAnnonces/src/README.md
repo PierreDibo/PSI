@@ -14,7 +14,7 @@ $sudo java Gestionnaire ip_adresse port_ecoute
 
 * Client
 ```
-$sudo java Client ip_gestionnaire port_gestionnaire [protocole] ip_client
+$sudo java Client ip_gestionnaire port_gestionnaire [TLSv1.2] ip_client
 ```
 
 # Configuration TSL

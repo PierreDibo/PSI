@@ -37,6 +37,8 @@ public enum MessageType {
     SUCCESS("a pu"),
     FAILURE("n'a pas pu"),
     END("***"),
+    BAN("BAN pseudo"),
+    UNBAN("BAN pseudo"),
     BYE("Connexion avec le serveur interrompu"),
     INVALID("INVALID message reçu"),
     CONNECT_SUCCESS("CONNECT_SUCCESS pseudo adresse port[_]", 5),
@@ -46,7 +48,12 @@ public enum MessageType {
     CALL_OPEN_SUCCESS("CALL_OPEN_SUCCESS pseudo[_]"),
     CALL_OPEN_ERROR(""),
     SENT(""),
-    ALREADY_CONNECTED("");
+    ALREADY_CONNECTED(""),
+    CHECK_DESCRIPTION(""),
+    DESCRIPTION_VIDE(""),
+    DESCRIPTION(""),
+    NOPE("")
+    ;
 
     private final String message;
     private final int params;

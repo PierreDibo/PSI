@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -14,6 +15,8 @@ import java.util.logging.Logger;
  * @author Aillerie Anthony
  */
 public class ClientEcouteur implements Runnable {
+
+    private static final Object LOCK = new Object();
 
     private final Socket socket;
     private final String protocole;
@@ -57,6 +60,10 @@ public class ClientEcouteur implements Runnable {
 
             for (String message; !this.socket.isClosed() && (message = br.readLine()) != null;) {
                 String msg = message;
+
+                if (message.substring(0, 3).equals("***")) {
+                    message = message.substring(3, message.length());
+                }
                 if (message.length() - 3 > 0) {
                     msg = message.substring(message.length() - 3, message.length());
                 }
@@ -97,7 +104,7 @@ public class ClientEcouteur implements Runnable {
                 if (this.protocole == null) {
                     parse_connectSuccess(msg, i);
                 } else {
-                    System.out.println(MessageType.MSG_TODO);
+                    parse_connectSuccessSSL(msg, i);
                 }
                 break;
             case BYE:
@@ -111,5 +118,19 @@ public class ClientEcouteur implements Runnable {
     private void parse_connectSuccess(String[] msg, int i) throws UnknownHostException {
         setClientRemote(new ClientRemote(msg[i++], clientAddr, Integer.parseInt(msg[i++])));
         new Thread(new ClientServeur(clientRemote)).start();
+    }
+
+    private void parse_connectSuccessSSL(String[] msg, int i) throws UnknownHostException {
+        try {
+            setClientRemote(new ClientRemote(msg[i++], clientAddr, Integer.parseInt(msg[i++])));
+            SSLClientServeur serverRunnable = new SSLClientServeur(this.protocole, this.clientAddr, clientRemote.port);
+            serverRunnable.start();
+            synchronized (LOCK) {
+                LOCK.wait();
+            }
+            serverRunnable.stop();
+        } catch (NoSuchAlgorithmException | IOException | InterruptedException ex) {
+            Logger.getLogger(ClientEcouteur.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 }
