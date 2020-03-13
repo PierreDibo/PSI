@@ -207,11 +207,10 @@ public class GestionnaireEcouteur extends Gestionnaire implements Runnable, Mess
 
     private void parse_addAnnonce(String message, String[] msg) throws InterruptedException {
         String[] m = message.split("\\|\\|");
-
         if (this.currentUser != null) {
             if (m.length != 2) {
                 invalid(this.socket);
-            } else if (msg.length >= messageType.getParameters()) {
+            } else if (msg.length + 1 >= messageType.getParameters()) {
                 int i = 0;
                 msg = m[1].split("\\s+");
                 if (addAnnonce(new Annonce(m[0].substring(MessageType.ADD_ANNONCE.name().length() + 1), Annonce.getDomaine(msg[i++].toLowerCase()), Long.parseLong(msg[i++]), getDescription(msg, i)))) {
@@ -260,6 +259,7 @@ public class GestionnaireEcouteur extends Gestionnaire implements Runnable, Mess
     }
 
     private void parse_checkAllAnnonces(String[] msg) throws InterruptedException {
+        System.out.println(msg.length + " " + messageType.getParameters());
         if (msg.length == messageType.getParameters()) {
             joinThread(new Thread(new GestionnaireEcrivain(this.socket, checkAllAnnonces())));
         } else {

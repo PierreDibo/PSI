@@ -60,8 +60,7 @@ public class ClientEcouteur implements Runnable {
 
             for (String message; !this.socket.isClosed() && (message = br.readLine()) != null;) {
                 String msg = message;
-
-                if (message.substring(0, 3).equals("***")) {
+                if (message.length() > 0 && message.substring(0, 3).equals("***")) {
                     message = message.substring(3, message.length());
                 }
                 if (message.length() - 3 > 0) {
